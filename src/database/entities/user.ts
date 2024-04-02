@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from "typeorm"
 import { Transaction } from "./transaction"
+import { Ticket } from "./ticket"
 
 @Entity()
 export class User {
@@ -24,9 +25,12 @@ export class User {
     roles: [string]
 
     @OneToMany(() => Transaction, (transaction) => transaction.user)
-    transactions: Transaction[]
+    transactions: Transaction[];
 
-    constructor(id: number, login: string, password: string, createdAt: Date, sold: number, roles: [string], transactions: Transaction[]) {
+    @OneToMany(() => Ticket, (ticket) => ticket.user)
+    tickets: Ticket[];
+
+    constructor(id: number, login: string, password: string, createdAt: Date, sold: number, roles: [string], transactions: Transaction[], tickets: Ticket[]) {
         this.id = id;
         this.login = login;
         this.password = password;
@@ -34,5 +38,6 @@ export class User {
         this.sold = sold;
         this.roles = roles;
         this.transactions = transactions;
+        this.tickets = tickets
     }
 }
