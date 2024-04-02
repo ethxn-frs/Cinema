@@ -17,7 +17,7 @@ export class Room {
     name: string
 
     @Column()
-    descrition: string
+    description: string
 
     @Column()
     type: string
@@ -38,7 +38,7 @@ export class Room {
     constructor(id: number, name: string, description: string, type: string, state: boolean, handicapAvailable: boolean, capacity: number, show: Show) {
         this.id = id;
         this.name = name;
-        this.descrition = description;
+        this.description = description;
         this.type = type;
         this.state = state;
         this.handicapAvailable = handicapAvailable;

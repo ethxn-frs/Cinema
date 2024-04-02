@@ -2,6 +2,7 @@ import { Collection, Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "t
 import { User } from "./user";
 import { Show } from "./show";
 import { TicketType } from "../../enumerators/TicketType";
+import { number } from "joi";
 
 @Entity()
 export class Ticket {
@@ -21,13 +22,17 @@ export class Ticket {
     @Column()
     used: Boolean;
 
-    constructor(id: number, user: User, show: Show, type: TicketType, used: Boolean) {
+    @Column()
+    price: number;
+
+    constructor(id: number, user: User, show: Show, type: TicketType, used: Boolean, price: number) {
 
         this.id = id;
         this.user = user;
         this.show = show;
         this.type = type;
         this.used = used;
+        this.price = price;
     }
 
 }
