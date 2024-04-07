@@ -2,48 +2,61 @@ import { DataSource } from "typeorm";
 import { Show } from "../database/entities/show";
 
 export interface ListShowFilter {
-    limit: number
-    page: number
-    priceMax?: number
+    limit: number;
+    page: number;
+    startAtMin?: Date;
+    startAtMax?: Date;
+    endAtMin?: Date;
+    endAtMax?: Date;
 }
 
 export interface UpdateShowParams {
-    startAt?: Date,
-    endAt?: Date,
+    startAt?: Date;
+    endAt?: Date;
 }
 
 export class ShowUsecase {
     constructor(private readonly db: DataSource) { }
 
     async listShow(listShowFilter: ListShowFilter): Promise<{ shows: Show[]; totalCount: number; }> {
-        console.log(listShowFilter)
-        const query = this.db.createQueryBuilder(Show, 'show')
-        if (listShowFilter.priceMax) {
-            query.andWhere('show.price <= :priceMax', { priceMax: listShowFilter.priceMax })
-        }
-        query.skip((listShowFilter.page - 1) * listShowFilter.limit)
-        query.take(listShowFilter.limit)
+        const query = this.db.createQueryBuilder(Show, 'show');
 
-        const [shows, totalCount] = await query.getManyAndCount()
+        if (listShowFilter.startAtMin) {
+            query.andWhere('show.startAt >= :startAtMin', { startAtMin: listShowFilter.startAtMin });
+        }
+
+        if (listShowFilter.startAtMax) {
+            query.andWhere('show.startAt <= :startAtMax', { startAtMax: listShowFilter.startAtMax });
+        }
+
+        if (listShowFilter.endAtMin) {
+            query.andWhere('show.endAt >= :endAtMin', { endAtMin: listShowFilter.endAtMin });
+        }
+
+        if (listShowFilter.endAtMax) {
+            query.andWhere('show.endAt <= :endAtMax', { endAtMax: listShowFilter.endAtMax });
+        }
+
+
+        query.skip((listShowFilter.page - 1) * listShowFilter.limit);
+        query.take(listShowFilter.limit);
+
+        const [shows, totalCount] = await query.getManyAndCount();
         return {
             shows,
             totalCount
-        }
+        };
     }
 
     async updateShow(id: number, { startAt, endAt }: UpdateShowParams): Promise<Show | null> {
-        const repo = this.db.getRepository(Show)
-        const showfound = await repo.findOneBy({ id })
-        if (showfound === null) return null
+        const repo = this.db.getRepository(Show);
+        const showFound = await repo.findOneBy({ id });
+        if (showFound === null) return null;
 
-        if (startAt) {
-            showfound.startAt = startAt
-        }
-        if (endAt) {
-            showfound.endAt = endAt
-        }
+        if (startAt) showFound.startAt = startAt;
+        if (endAt) showFound.endAt = endAt;
 
-        const showUpdate = await repo.save(showfound)
-        return showUpdate
+        const showUpdated = await repo.save(showFound);
+        return showUpdated;
     }
 }
