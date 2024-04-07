@@ -26,7 +26,7 @@ export interface ShowRequest {
     tickets: [Ticket],
 }
 
-export const listShowValidation = Joi.object<ListShowRequest>({
+export const listShowsValidation = Joi.object<ListShowRequest>({
     page: Joi.number().min(1).optional(),
     limit: Joi.number().min(1).optional(),
 })
