@@ -53,23 +53,6 @@ export const LoginUserValidation = Joi.object<LoginUser>({
     password: Joi.string().min(8).required(),
 })
 
-
-/*export interface TransactionValidator{
-    findAll(): any;
-    id: number,
-    transactions: [],
-    roles: string
-}
-
-export const ListUserTransactionValidator =Joi.object<TransactionValidator>({
-    id: Joi.number(),
-    transactions: Joi.array().items(Joi.object().keys({
-        id: Joi.number().required(),
-        amount: Joi.number().required(),
-    })).required(),
-    roles: Joi.string()
-})*/
-
 //view solde
 
 export interface showUserSold{
@@ -113,7 +96,3 @@ export const UserTicketListValidatort = Joi.object<UserTicket>({
     })).required(),
     roles: Joi.array().required(),
 })
-
-
-
-

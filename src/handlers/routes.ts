@@ -4,6 +4,9 @@ import { userValidation as userValidation,creatUser,LoginUserValidation,UserTran
 import { generateValidationErrorMessage } from "./validators/generate-validation-message";
 import { AppDataSource } from "../database/database";
 import { User } from "../database/entities/user";
+
+import { ticketValidation, listTicketValidation, updateTicketValidation, ticketIdValidation } from './validators/ticket-validator'; // Ajustez le chemin d'importation
+
 //import { ProductUsecase } from "../domain/product-usecase";
 
 export const initRoutes = (app: express.Express) => {
@@ -100,7 +103,7 @@ export const initRoutes = (app: express.Express) => {
         res.status(200).send({ message: 'Déconnexion réussie. Veuillez supprimer votre jeton.' });
     })
 
-    //
+    // obtenir le solde
     app.get('/users/:id/solde', async (req, res) => {
         try{
             const showusersoldvalidatort = showUserSoldValidatort.validate(req.body)
@@ -121,6 +124,7 @@ export const initRoutes = (app: express.Express) => {
         }
     });
     
+    // voir la liste de transaction
     app.get('/users/:id/transactions', async (req, res) => {
         try{
             const showuserTransationvalidatort = UserTransationListValidatort.validate(req.body)
@@ -151,6 +155,7 @@ export const initRoutes = (app: express.Express) => {
         }
     });
 
+    // liste des tickets
     app.get('/users/:id/tickets', async (req, res) => {
         try{
             const UserTicketList = UserTicketListValidatort.validate(req.body)
@@ -184,7 +189,57 @@ export const initRoutes = (app: express.Express) => {
     app.get('/users/:id/role', async (req, res) => {
         // Logique pour vérifier et retourner le rôle de l'utilisateur
     });
-      
+     
+    
+    // Créer un nouveau ticket
+    app.post('/tickets', (req, res) => {
+        const ticketvalidation = ticketValidation.validate(req.body);
+
+        if(ticketvalidation.error){
+            res.status(400).send(generateValidationErrorMessage(ticketvalidation.error.details))
+            return
+        }
+        // Logique pour créer un ticket avec les données validées `value`
+        res.status(201).send({ message: "Ticket créé", ticket: ticketvalidation.value });
+    });
+
+    // Lister les tickets avec pagination et filtre optionnel par prix max
+    app.get('/tickets', (req, res) => {
+        const listticket = listTicketValidation.validate(req.body);
+
+        if(listticket.error){
+            return res.status(400).send(generateValidationErrorMessage(listticket.error.details))   
+        }
+
+        // Logique pour lister les tickets selon les critères validés `value`
+        res.send({ message: "Liste des tickets", criteria: listticket.value, tickets: [] });
+    });
+
+    // Mettre à jour un ticket par ID
+    app.patch('/tickets/:id', (req, res) => {
+
+        const ticketIdError = ticketIdValidation.validate({ id: req.params.id });
+
+        const updateError = updateTicketValidation.validate(req.body);
+
+        if (ticketIdError.error || updateError.error){
+            return res.status(400).json({ ...ticketIdError.error?.details, ...updateError.error?.details });
+        }
+
+        // Logique pour mettre à jour un ticket avec les données validées
+        res.send({ message: "Ticket mis à jour", ticketId: req.params.id, updateData: updateError.value });
+    });
+
+    // Supprimer un ticket par ID
+    app.delete('/tickets/:id', (req, res) => {
+        const { error } = ticketIdValidation.validate({ id: req.params.id });
+        if (error) {
+            return res.status(400).json(error.details);
+        }
+        // Logique pour supprimer un ticket avec l'ID validé
+        res.send({ message: "Ticket supprimé", ticketId: req.params.id });
+    });
+
       
 }
 
