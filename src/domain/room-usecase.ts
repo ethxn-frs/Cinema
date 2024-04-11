@@ -6,18 +6,16 @@ export interface ListRoomFilter {
     limit: number
 }
 
-export class RoomUseCase
-{
-    constructor(private readonly db: DataSource){}
+export class RoomUseCase {
+    constructor(private readonly db: DataSource) { }
 
-    async listRoom(listRoomFilter: ListRoomFilter): Promise<{ rooms: Room[]; totalCount: number; }> 
-    {
+    async listRoom(listRoomFilter: ListRoomFilter): Promise<{ rooms: Room[]; totalCount: number; }> {
         const query = this.db.createQueryBuilder(Room, 'room');
 
         query.skip((listRoomFilter.page - 1) * listRoomFilter.limit);
         query.take(listRoomFilter.limit);
 
         const [rooms, totalCount] = await query.getManyAndCount();
-        return {rooms, totalCount};
+        return { rooms, totalCount };
     }
 }

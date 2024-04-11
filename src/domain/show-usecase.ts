@@ -37,7 +37,6 @@ export class ShowUsecase {
             query.andWhere('show.endAt <= :endAtMax', { endAtMax: listShowFilter.endAtMax });
         }
 
-
         query.skip((listShowFilter.page - 1) * listShowFilter.limit);
         query.take(listShowFilter.limit);
 
