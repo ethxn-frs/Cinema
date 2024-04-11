@@ -2,7 +2,7 @@ import { Column, OneToOne } from "typeorm"
 import { PrimaryGeneratedColumn } from "typeorm/decorator/columns/PrimaryGeneratedColumn"
 import { Entity } from "typeorm/decorator/entity/Entity"
 import { Show } from "./show"
-import { faDharmachakra } from "@fortawesome/free-solid-svg-icons"
+//import { faDharmachakra } from "@fortawesome/free-solid-svg-icons"
 
 
 @Entity()
