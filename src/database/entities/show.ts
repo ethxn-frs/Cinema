@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Room } from "./room";
 import { Movie } from "./movie";
 import { ShowState } from "../../enumerators/ShowState";
@@ -10,7 +10,7 @@ export class Show {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @OneToOne(() => Room, (room) => room.show)
+    @ManyToOne(() => Room, (roomShow) => roomShow.shows)
     room: Room;
 
     @OneToOne(() => Movie, (movie) => movie.show)

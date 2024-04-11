@@ -17,8 +17,11 @@ import { Room } from "../database/entities/room";
 
 export const initRoutes = (app: express.Express) => {
 
+
     /* Routes pour les Shows */
 
+
+    // get all shows
     app.get("/shows", async (req: Request, res: Response) => {
         const validation = listShowsValidation.validate(req.query)
 
@@ -44,7 +47,7 @@ export const initRoutes = (app: express.Express) => {
         }
     })
 
-    //getShowByID
+    //get a show by id
     app.get("/shows/:id", async (req: Request, res: Response) => {
         try {
             const validationResult = showIdValidation.validate(req.params)
@@ -69,11 +72,37 @@ export const initRoutes = (app: express.Express) => {
 
     })
 
+    // delete a show by id
+    app.delete("/shows/:id", async (req: Request, res: Response) => {
+        try {
+            const validationResult = showIdValidation.validate(req.params)
+
+            if (validationResult.error) {
+                res.status(400).send(generateValidationErrorMessage(validationResult.error.details))
+                return
+            }
+            const showId = validationResult.value
+
+            const showRepository = AppDataSource.getRepository(Show)
+            const show = await showRepository.findOneBy({ id: showId.id })
+            if (show === null) {
+                res.status(404).send({ "error": `show ${showId.id} not found` })
+                return
+            }
+
+            const showDeleted = await showRepository.remove(show)
+            res.status(200).send(showDeleted)
+        } catch (error) {
+            console.log(error)
+            res.status(500).send({ error: "Internal error" })
+        }
+    })
+
 
     /* Routes pour les Movies */
 
 
-    //getAllMovies
+    //get all movies
     app.get("/movies", async (req: Request, res: Response) => {
         const validation = listMovieValidation.validate(req.query)
 
@@ -100,7 +129,7 @@ export const initRoutes = (app: express.Express) => {
 
     })
 
-    //getMovieById
+    //get a movie by id
     app.get("/movies/:id", async (req: Request, res: Response) => {
         try {
             const validationResult = movieIdValidation.validate(req.params)
@@ -125,11 +154,37 @@ export const initRoutes = (app: express.Express) => {
         }
     })
 
+    // delete a movie by id
+    app.delete("/movies/:id", async (req: Request, res: Response) => {
+        try {
+            const validationResult = movieIdValidation.validate(req.params)
+
+            if (validationResult.error) {
+                res.status(400).send(generateValidationErrorMessage(validationResult.error.details))
+                return
+            }
+            const movieId = validationResult.value
+
+            const movieRepository = AppDataSource.getRepository(Movie)
+            const movie = await movieRepository.findOneBy({ id: movieId.id })
+            if (movie === null) {
+                res.status(404).send({ "error": `movie ${movieId.id} not found` })
+                return
+            }
+
+            const movieDeleted = await movieRepository.remove(movie)
+            res.status(200).send(movieDeleted)
+        } catch (error) {
+            console.log(error)
+            res.status(500).send({ error: "Internal error" })
+        }
+    })
+
 
     /* Routes pour les Tickets */
 
 
-    //getAllTickets
+    //get all tickets
     app.get("/tickets", async (req: Request, res: Response) => {
         const validation = listTicketValidation.validate(req.query)
 
@@ -156,7 +211,7 @@ export const initRoutes = (app: express.Express) => {
     })
 
 
-    //getTicketByID
+    //get a ticket by id
     app.get("/tickets/:id", async (req: Request, res: Response) => {
         try {
             const validationResult = ticketIdValidation.validate(req.params)
@@ -184,11 +239,37 @@ export const initRoutes = (app: express.Express) => {
 
     })
 
+    // delete a ticket by id
+    app.delete("/tickets/:id", async (req: Request, res: Response) => {
+        try {
+            const validationResult = ticketIdValidation.validate(req.params)
+
+            if (validationResult.error) {
+                res.status(400).send(generateValidationErrorMessage(validationResult.error.details))
+                return
+            }
+            const ticketId = validationResult.value
+
+            const ticketRepository = AppDataSource.getRepository(Ticket)
+            const ticket = await ticketRepository.findOneBy({ id: ticketId.id })
+            if (ticket === null) {
+                res.status(404).send({ "error": `ticket ${ticketId.id} not found` })
+                return
+            }
+
+            const ticketDeleted = await ticketRepository.remove(ticket)
+            res.status(200).send(ticketDeleted)
+        } catch (error) {
+            console.log(error)
+            res.status(500).send({ error: "Internal error" })
+        }
+    })
+
 
     /* Routes pour les Rooms */
 
 
-    //getAllRoom
+    //get all rooms
     app.get("/rooms", async (req: Request, res: Response) => {
         const validation = listRoomValidation.validate(req.query)
 
@@ -215,7 +296,7 @@ export const initRoutes = (app: express.Express) => {
     })
 
 
-    //getRoomById
+    //get a room by id
     app.get("/rooms/:id", async (req: Request, res: Response) => {
         try {
             const validationResult = roomIdValidation.validate(req.params)
@@ -238,6 +319,32 @@ export const initRoutes = (app: express.Express) => {
         catch (error) {
             console.log(error)
             res.status(500).send({ "error": "Internal error" })
+        }
+    })
+
+    // delete a room by id
+    app.delete("/rooms/:id", async (req: Request, res: Response) => {
+        try {
+            const validationResult = roomIdValidation.validate(req.params)
+
+            if (validationResult.error) {
+                res.status(400).send(generateValidationErrorMessage(validationResult.error.details))
+                return
+            }
+            const roomId = validationResult.value
+
+            const roomRepository = AppDataSource.getRepository(Room)
+            const room = await roomRepository.findOneBy({ id: roomId.id })
+            if (room === null) {
+                res.status(404).send({ "error": `room ${roomId.id} not found` })
+                return
+            }
+
+            const roomDeleted = await roomRepository.remove(room)
+            res.status(200).send(roomDeleted)
+        } catch (error) {
+            console.log(error)
+            res.status(500).send({ error: "Internal error" })
         }
     })
 }
