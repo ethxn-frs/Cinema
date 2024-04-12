@@ -5,7 +5,7 @@ import { AppDataSource } from "./database/database";
 
 const main = async () => {
     const app = express()
-    const port = 8088
+    const port = 3000
     try {
 
         await AppDataSource.initialize()

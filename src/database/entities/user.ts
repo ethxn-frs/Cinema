@@ -22,7 +22,7 @@ export class User {
     sold: number
 
     @Column()
-    roles: [string]
+    roles: string
 
     @OneToMany(() => Transaction, (transaction) => transaction.user)
     transactions: Transaction[];
@@ -30,7 +30,7 @@ export class User {
     @OneToMany(() => Ticket, (ticket) => ticket.user)
     tickets: Ticket[];
 
-    constructor(id: number, login: string, password: string, createdAt: Date, sold: number, roles: [string], transactions: Transaction[], tickets: Ticket[]) {
+    constructor(id: number, login: string, password: string, createdAt: Date, sold: number, roles: string, transactions: Transaction[], tickets: Ticket[]) {
         this.id = id;
         this.login = login;
         this.password = password;

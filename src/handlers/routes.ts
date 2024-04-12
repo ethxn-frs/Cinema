@@ -1,13 +1,13 @@
-import express, { Request, Response, request } from "express";
+import express, { Request, Response} from "express";
 import { compare, hash} from "bcrypt";
-import { userValidation as userValidation,creatUser,LoginUserValidation,UserTransationListValidatort,showUserSoldValidatort,UserTicketListValidatort} from "./validators/user-validator";
+import { userValidation as userValidation,listUserValidation,UserValidationRequest,LoginUserValidation,
+    showUserSoldValidatort,UserIdValidator,creatUser} from "./validators/user-validator";
 import { generateValidationErrorMessage } from "./validators/generate-validation-message";
 import { AppDataSource } from "../database/database";
 import { User } from "../database/entities/user";
+import { ListUsecase} from "../domain/user-usecase";
 
 import { ticketValidation, listTicketValidation, updateTicketValidation, ticketIdValidation } from './validators/ticket-validator'; // Ajustez le chemin d'importation
-
-//import { ProductUsecase } from "../domain/product-usecase";
 
 export const initRoutes = (app: express.Express) => {
     
@@ -15,26 +15,101 @@ export const initRoutes = (app: express.Express) => {
         res.send({ "message": "hello world" })
     })
 
-    
-    app.get("/users",(req: Request,res: Response)=>{
-        const uservalidation = userValidation.validate(req.query)
-        if (uservalidation.error) {
-            res.status(400).send(generateValidationErrorMessage(uservalidation.error.details))
+//  récupère la liste des utlisateurs 
+    app.get("/users", async (req: Request, res: Response) => {
+        const validation = listUserValidation.validate(req.query)
+
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
             return
         }
-        return res.json(userValidation);
+
+        const listuserRequest = validation.value
+        let limit = 50
+        if (listuserRequest.limit) {
+            limit = listuserRequest.limit
+        }
+        const page = listuserRequest.page ?? 1
+
+        try {
+            const list = new ListUsecase(AppDataSource);
+
+            const listShows = await list.listUser({ ...listuserRequest, page, limit })
+            res.status(200).send(listShows)
+        } catch (error) {
+            console.log(error)
+            res.status(500).send({ error: "Internal error" })
+        }
     })
 
-    // A revoir
-   /* app.post("/users",(req: Request, res: Response)=>{
+    // créer un utlisateur 
+   app.post("/users",async (req: Request, res: Response)=>{
+        try {
+            const uservalidation = UserValidationRequest.validate(req.body)
 
-        const uservalidation = userValidation.validate(req.query)
-        if (uservalidation.error) {
-            res.status(400).send(generateValidationErrorMessage(uservalidation.error.details))
-            return
+            if (uservalidation.error) {
+                res.status(400).send(generateValidationErrorMessage(uservalidation.error.details))
+                return
+            }
+
+            const uservalue = uservalidation.value
+            const hashedPassword = await hash(uservalue.password, 10);
+            uservalue.password = hashedPassword;
+            const creatuser = AppDataSource.getRepository(User)
+            await creatuser.save(
+                uservalue
+            );
+            res.status(201).json({ message: "User created successfully"});
+        } catch (error) {
+            console.error('Error creating user:', error);
+            res.status(500).json({ message: 'Internal Server Error' });
         }
-        return res.json(userValidation);
-    })*/
+    })
+
+    app.get('/users/:id', async (req, res) => {
+        try{
+            const showuser = UserIdValidator.validate(req.params)
+            if(showuser.error){
+                res.status(400).send(generateValidationErrorMessage(showuser.error.details))
+                return
+            }
+            const useridvalidation = AppDataSource.getRepository(User)
+            const userinfo = showuser.value;
+            const user = await useridvalidation.findOneBy({ id:userinfo.id});
+
+            if (user === null) {
+                res.status(404).send({ "error": `product ${userinfo.id} not found` })
+                return
+            }
+            res.status(200).send(user)
+        }catch (error) {
+            console.log(error)
+            res.status(500).send({ error: "Internal error" })
+        }
+    });
+
+    // obtenir le solde
+    app.get('/users/:id/solde', async (req, res) => {
+        try{
+            const showusersoldvalidatort = showUserSoldValidatort.validate(req.params)
+            if(showusersoldvalidatort.error){
+                res.status(400).send(generateValidationErrorMessage(showusersoldvalidatort.error.details))
+                return
+            }
+            const usersolde = AppDataSource.getRepository(User)
+            const usersoldevalue = showusersoldvalidatort.value;
+            const solde = await usersolde.findOneBy({ id:usersoldevalue.id, sold:usersoldevalue.sold});
+
+            if (solde === null) {
+                res.status(404).send({ "error": `product ${usersoldevalue.id} not found` })
+                return
+            }
+            res.status(200).send({sold: solde.sold})
+        }catch (error) {
+            console.log(error)
+            res.status(500).send({ error: "Internal error" })
+        }
+    });
 
     // inscription  utilisateur
     app.post('/auth/signup', async (req: Request, res: Response) => {
@@ -47,15 +122,11 @@ export const initRoutes = (app: express.Express) => {
             }
             const createUserRequest = createuserRequest.value // récupère les données
             const hashedPassword = await hash(createUserRequest.password, 10); //hash le mot de passe
-            const userRepository = AppDataSource.getRepository(User)
+            const userRepository = AppDataSource.getRepository(User);
+            createUserRequest.password = hashedPassword;
+            const newUser = userRepository.save(createUserRequest);
 
-            const newUser = userRepository.save({
-                login: createUserRequest.login,
-                password : hashedPassword,
-                solde: 0
-            });
-
-            res.status(201).send({newUser})
+            res.status(201).send({message:"compte avec succès"})
             return
         } catch (error) {
             console.log(error)
@@ -73,25 +144,25 @@ export const initRoutes = (app: express.Express) => {
                 return
             }
 
-            const loginuser = LoginUser.value // récupère les données
-            const hashedPassword = await hash(loginuser.password, 10); //hash le mot de passe
-            const userRepository = AppDataSource.getRepository(User)
+            const { login, password } = LoginUser.value;
+            const user = await AppDataSource.getRepository(User).findOneBy({login: login})
 
-            const match = await compare(hashedPassword, loginuser.password);
+            if(!user){
+                res.status(400).send({error:"username or password not valid"})
+                return
+            }
+            
+            const match = await compare(password, user.password);
 
-            if(match){
-                res.send({ message: 'Connexion réussie'});
-                res.send({
-                    message: 'Connexion réussie',
-                    login : loginuser.login
-                })
+            if(!match){
+                res.status(401).send({ error: ' password not valid' });
             }
-            else {
-                res.status(401).send({ error: 'Mot de passe incorrect' });
-            }
- 
-            res.status(201).send({loginuser})
-            return
+            
+            // Login successful
+            return res.status(200).send({
+                message: 'Connexion réussie',
+                login: user.login
+            });
         } catch (error) {
             console.log(error)
             res.status(500).send({ "error": "internal error retry later" })
@@ -99,31 +170,11 @@ export const initRoutes = (app: express.Express) => {
         }
     })
     
-    app.post('/auth/logout', (req, res) => {
+    app.get('/auth/logout', (req, res) => {
         res.status(200).send({ message: 'Déconnexion réussie. Veuillez supprimer votre jeton.' });
     })
 
-    // obtenir le solde
-    app.get('/users/:id/solde', async (req, res) => {
-        try{
-            const showusersoldvalidatort = showUserSoldValidatort.validate(req.body)
-            if(showusersoldvalidatort.error){
-                res.status(400).send(generateValidationErrorMessage(showusersoldvalidatort.error.details))
-                return
-            }
-            const usersolde = AppDataSource.getRepository(User)
-            const solde = await usersolde.findOneBy({ id: showusersoldvalidatort.value.id })
-            if (solde === null) {
-                res.status(404).send({ "error": `product ${showusersoldvalidatort.value.id} not found` })
-                return
-            }
-            res.status(200).send(solde.sold)
-        }catch (error) {
-            console.log(error)
-            res.status(500).send({ error: "Internal error" })
-        }
-    });
-    
+ /*     
     // voir la liste de transaction
     app.get('/users/:id/transactions', async (req, res) => {
         try{
@@ -238,8 +289,7 @@ export const initRoutes = (app: express.Express) => {
         }
         // Logique pour supprimer un ticket avec l'ID validé
         res.send({ message: "Ticket supprimé", ticketId: req.params.id });
-    });
+    });*/
 
       
 }
-
