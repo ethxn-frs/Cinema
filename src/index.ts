@@ -1,6 +1,10 @@
 import express from "express";
-import { initRoutes } from "./handlers/route";
 import { AppDataSource } from "./database/database";
+import { showRoutes } from "./handlers/routes/shows-route";
+import { movieRoutes } from "./handlers/routes/movies-route";
+import { roomRoutes } from "./handlers/routes/rooms-route";
+import { ticketRoutes } from "./handlers/routes/tickets-route";
+import { imageRoutes } from "./handlers/routes/images-route";
 
 
 const main = async () => {
@@ -17,7 +21,11 @@ const main = async () => {
 
     app.use(express.json());
 
-    initRoutes(app);
+    showRoutes(app);
+    movieRoutes(app);
+    ticketRoutes(app);
+    roomRoutes(app);
+    imageRoutes(app);
 
     app.listen(port, () => {
         console.log(`Server running on port ${port}`);
