@@ -7,28 +7,28 @@ import { Movie } from "./movie";
 export class Image {
 
     @PrimaryGeneratedColumn("uuid")
-    id: string;
+    id!: string;
 
     @Column({
         unique: true
     })
-    name: string
+    name!: string;
 
     @OneToOne(() => Movie, (movie) => movie.image)
-    movie: Movie
+    movie!: Movie;
 
     @Column()
-    path: string;
+    path!: string;
 
     @Column()
-    type: string;
+    type!: string;
 
-    constructor(id: string, name: string, movie: Movie, path: string, type: string) {
-        this.id = id;
-        this.name = name;
-        this.movie = movie;
-        this.path = path;
-        this.type = type;
+    constructor(id?: string, name?: string, movie?: Movie, path?: string, type?: string) {
+        if (id)this.id = id;
+        if (name) this.name = name;
+        if (movie) this.movie = movie;
+        if (path) this.path = path;
+        if (type) this.type = type;
     }
 
 }

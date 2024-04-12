@@ -7,13 +7,14 @@ import { listMovieValidation, movieIdValidation, movieValidation } from "./valid
 import { listTicketValidation, ticketIdValidation, ticketValidation } from "./validators/ticket-validator";
 import { listRoomValidation, roomIdValidation, roomValidation } from "./validators/room-validator";
 import { MovieUseCase } from "../domain/movie-usecase";
-import { DataSource } from "typeorm";
 import { TicketUseCase } from "../domain/ticket-usecase";
 import { RoomUseCase } from "../domain/room-usecase";
 import { Show } from "../database/entities/show";
 import { Movie } from "../database/entities/movie";
 import { Ticket } from "../database/entities/ticket";
 import { Room } from "../database/entities/room";
+import { upload } from "../config/multerConfig"
+import { Image } from "../database/entities/image"
 
 export const initRoutes = (app: express.Express) => {
 
@@ -432,4 +433,30 @@ export const initRoutes = (app: express.Express) => {
             res.status(500).send({ error: "Internal error" })
         }
     })
+
+    app.post('/images', upload.single('image'), async (req: Request, res: Response) => {
+        if (!req.file) {
+            return res.status(400).send("File upload failed.");
+        }
+
+        try {
+            const imageRepository = AppDataSource.getRepository(Image);
+
+            const newImage = new Image();
+            newImage.name = req.file.filename;
+            newImage.path = req.file.path;
+            newImage.type = req.file.mimetype;
+
+            // Sauvegarder l'image
+            const savedImage = await imageRepository.save(newImage);
+            res.status(201).send({
+                message: "File uploaded and Image saved successfully",
+                imageData: savedImage
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).send({ error: "Internal error" });
+        }
+    });
+
 }
