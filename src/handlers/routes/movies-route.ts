@@ -38,19 +38,20 @@ export const movieRoutes = (app: express.Express) => {
     app.get("/movies/:id", async (req: Request, res: Response) => {
         try {
             const validationResult = movieIdValidation.validate(req.params)
+
             if (validationResult.error) {
                 res.status(400).send(generateValidationErrorMessage(validationResult.error.details))
                 return
             }
-            const movieId = validationResult.value
-            const movieRepository = AppDataSource.getRepository(Movie)
-            const movie = await movieRepository.findOneBy({ id: movieId.id })
+
+            const movieId = validationResult.value.id
+            const movieUseCase = new MovieUseCase(AppDataSource)
+            const movie = await movieUseCase.getMovieById(movieId);
 
             if (movie === null) {
-                res.status(404).send({ "error": `error movie ${movieId.id} not found` })
+                res.status(404).send({ "error": `error movie ${movieId} not found` })
                 return
             }
-
             res.status(200).send(movie)
         }
         catch (error) {
@@ -94,9 +95,9 @@ export const movieRoutes = (app: express.Express) => {
         }
 
         const movieRequest = validation.value
-        const movieRepo = AppDataSource.getRepository(Movie)
+        const movieUseCase = new MovieUseCase(AppDataSource)
         try {
-            const movieCreated = await movieRepo.save(
+            const movieCreated = await movieUseCase.createMovie(
                 movieRequest
             )
             res.status(201).send(movieCreated)

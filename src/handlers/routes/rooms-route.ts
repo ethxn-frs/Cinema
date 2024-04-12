@@ -4,6 +4,7 @@ import { Room } from "../../database/entities/room";
 import { RoomUseCase } from "../../domain/room-usecase";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
 import { listRoomValidation, roomIdValidation, roomValidation } from "../validators/room-validator";
+import { ShowUsecase } from "../../domain/show-usecase";
 
 export const roomRoutes = (app: express.Express) => {
 
@@ -95,11 +96,10 @@ export const roomRoutes = (app: express.Express) => {
         }
 
         const roomRequest = validation.value
-        const roomRepo = AppDataSource.getRepository(Room)
+        const roomUsecase = new RoomUseCase(AppDataSource);
         try {
-            const roomCreated = await roomRepo.save(
-                roomRequest
-            )
+            const roomCreated = await roomUsecase.createRoom(roomRequest);
+
             res.status(201).send(roomCreated)
         } catch (error) {
             res.status(500).send({ error: "Internal error" })

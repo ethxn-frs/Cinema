@@ -6,26 +6,26 @@ import { Show } from "./show";
 export class Movie {
 
     @PrimaryGeneratedColumn()
-    id: number
+    id!: number;
 
     @Column()
-    name: string
+    name!: string;
 
     @Column()
-    description: string
+    description!: string;
 
     @OneToOne(() => Image, (image) => image.movie)
-    image: Image
+    image!: Image;
 
     @OneToOne(() => Show, (show) => show.room)
     @JoinColumn()
-    show: Show;
+    show!: Show;
 
-    constructor(id: number, name: string, description: string, image: Image, show: Show) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.image = image;
-        this.show = show;
+    constructor(id?: number, name?: string, description?: string, image?: Image, show?: Show) {
+        if (id) this.id = id;
+        if (name) this.name = name;
+        if (description) this.description = description;
+        if (image) this.image = image;
+        if (show) this.show = show;
     }
 }

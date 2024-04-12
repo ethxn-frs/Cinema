@@ -9,13 +9,13 @@ export const movieValidation = Joi.object<MovieRequest>({
     description: Joi.string()
         .min(5)
         .required(),
-    image: Image,
+    imageId: Joi.string().min(1).optional(),
 }).options({ abortEarly: false })
 
 export interface MovieRequest {
     name: string
     description: string
-    image: Image,
+    imageId: string,
 }
 
 export const listMovieValidation = Joi.object<ListMovieRequest>({
