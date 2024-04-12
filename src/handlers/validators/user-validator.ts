@@ -97,6 +97,14 @@ export const LoginUserValidation = Joi.object<LoginUser>({
     password: Joi.string().min(8).required(),
 })
 
+export interface userUpDateSolde{
+    sold: number
+}
+
+export const userUpDateSolde = Joi.object<userUpDateSolde>({
+    sold: Joi.number().min(0).required(),
+})
+
 /*
 //view transaction
 export interface UserTransation{

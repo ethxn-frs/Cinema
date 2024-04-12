@@ -1,7 +1,7 @@
 import express, { Request, Response} from "express";
 import { compare, hash} from "bcrypt";
 import { userValidation as userValidation,listUserValidation,UserValidationRequest,LoginUserValidation,
-    showUserSoldValidatort,UserIdValidator,creatUser} from "./validators/user-validator";
+    showUserSoldValidatort,UserIdValidator,creatUser,userUpDateSolde} from "./validators/user-validator";
 import { generateValidationErrorMessage } from "./validators/generate-validation-message";
 import { AppDataSource } from "../database/database";
 import { User } from "../database/entities/user";
@@ -88,6 +88,33 @@ export const initRoutes = (app: express.Express) => {
         }
     });
 
+    // delete a ticket by id
+    app.delete("/users/:id", async (req: Request, res: Response) => {
+        try {
+            const deleteuser = UserIdValidator.validate(req.params)
+
+            if (deleteuser.error) {
+                res.status(400).send(generateValidationErrorMessage(deleteuser.error.details))
+                return
+            }
+            const userid = deleteuser.value
+
+            const userRepository = AppDataSource.getRepository(User)
+            const user = await userRepository.findOneBy({ id: userid.id })
+            if (user === null) {
+                res.status(404).send({ "error": `ticket ${userid.id} not found` })
+                return
+            }
+
+            const userDeleted = await userRepository.remove(user)
+            res.status(200).send(userDeleted)
+            res.status(200).send({"message":`user ${userid.id} is delete`})
+        } catch (error) {
+            console.log(error)
+            res.status(500).send({ error: "Internal error" })
+        }
+    })
+
     // obtenir le solde
     app.get('/users/:id/solde', async (req, res) => {
         try{
@@ -110,6 +137,42 @@ export const initRoutes = (app: express.Express) => {
             res.status(500).send({ error: "Internal error" })
         }
     });
+
+    app.patch('/users/:id/balance', async (req, res) => {
+        try {
+            const paramValidation = UserIdValidator.validate(req.params);
+            if (paramValidation.error) {
+                return res.status(400).send(generateValidationErrorMessage(paramValidation.error.details));
+            }
+    
+            const bodyValidation = userUpDateSolde.validate(req.body);
+            if (bodyValidation.error) {
+                return res.status(400).send(generateValidationErrorMessage(bodyValidation.error.details));
+            }
+    
+            const { id } = paramValidation.value;
+            const { sold } = bodyValidation.value;
+    
+            const userRepository = AppDataSource.getRepository(User);
+            const user = await userRepository.findOneBy({ id: id });
+    
+            // Check if the user exists
+            if (!user) {
+                return res.status(404).send({ "error": `User with ID ${id} not found` });
+            }
+    
+            // Update the user's balance
+            user.sold = sold;
+            await userRepository.save(user);
+    
+            // Send the updated user info or just a success message
+            res.status(200).send({ message: "User balance updated successfully", sold: user.sold });
+        } catch (error) {
+            console.error('Error updating user balance:', error);
+            res.status(500).send({ error: "Internal error" });
+        }
+    });
+    
 
     // inscription  utilisateur
     app.post('/auth/signup', async (req: Request, res: Response) => {
