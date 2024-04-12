@@ -1,4 +1,4 @@
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Image } from "./image"
 import { Show } from "./show";
 
@@ -18,6 +18,7 @@ export class Movie {
     image: Image
 
     @OneToOne(() => Show, (show) => show.room)
+    @JoinColumn()
     show: Show;
 
     constructor(id: number, name: string, description: string, image: Image, show: Show) {

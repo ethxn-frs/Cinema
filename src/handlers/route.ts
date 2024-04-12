@@ -1,11 +1,11 @@
 import express, { Request, Response } from "express";
 import { generateValidationErrorMessage } from "./validators/generate-validation-message";
 import { AppDataSource } from "../database/database";
-import { listShowsValidation, showIdValidation } from "./validators/show-validator";
+import { listShowsValidation, showIdValidation, showValidation } from "./validators/show-validator";
 import { ShowUsecase } from "../domain/show-usecase";
-import { listMovieValidation, movieIdValidation } from "./validators/movie-validator";
-import { listTicketValidation, ticketIdValidation } from "./validators/ticket-validator";
-import { listRoomValidation, roomIdValidation } from "./validators/room-validator";
+import { listMovieValidation, movieIdValidation, movieValidation } from "./validators/movie-validator";
+import { listTicketValidation, ticketIdValidation, ticketValidation } from "./validators/ticket-validator";
+import { listRoomValidation, roomIdValidation, roomValidation } from "./validators/room-validator";
 import { MovieUseCase } from "../domain/movie-usecase";
 import { DataSource } from "typeorm";
 import { TicketUseCase } from "../domain/ticket-usecase";
@@ -50,27 +50,27 @@ export const initRoutes = (app: express.Express) => {
     //get a show by id
     app.get("/shows/:id", async (req: Request, res: Response) => {
         try {
-            const validationResult = showIdValidation.validate(req.params)
+            const validationResult = showIdValidation.validate(req.params);
             if (validationResult.error) {
-                res.status(400).send(generateValidationErrorMessage(validationResult.error.details))
-                return
+                res.status(400).send(generateValidationErrorMessage(validationResult.error.details));
+                return;
             }
-            const showId = validationResult.value
-            const showRepository = AppDataSource.getRepository(Show)
-            const show = await showRepository.findOneBy({ id: showId.id })
+
+            const showId = validationResult.value.id;
+            const showUsecase = new ShowUsecase(AppDataSource);
+            const show = await showUsecase.getShowById(showId);
 
             if (show === null) {
-                res.status(404).send({ "error": `error show ${showId.id} not found` })
-                return
+                res.status(404).send({ "error": `Show ${showId} not found` });
+                return;
             }
-            res.status(200).send(show)
+            res.status(200).send(show);
+        } catch (error) {
+            console.log(error);
+            res.status(500).send({ "error": "Internal error" });
         }
-        catch (error) {
-            console.log(error)
-            res.status(500).send({ "error": "Internal error" })
-        }
+    });
 
-    })
 
     // delete a show by id
     app.delete("/shows/:id", async (req: Request, res: Response) => {
@@ -98,6 +98,31 @@ export const initRoutes = (app: express.Express) => {
         }
     })
 
+    app.post("/shows", async (req: Request, res: Response) => {
+        const validation = showValidation.validate(req.body);
+
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details));
+            return;
+        }
+
+        const showRequest = validation.value;
+        const showUsecase = new ShowUsecase(AppDataSource);
+
+        try {
+            const result = await showUsecase.createShow(showRequest);
+
+            if (result instanceof Error) {
+                res.status(400).send({ "error": result.message });
+                return;
+            }
+
+            res.status(201).send(result);
+        } catch (error) {
+            console.error(error);
+            res.status(500).send({ error: "Internal error" });
+        }
+    });
 
     /* Routes pour les Movies */
 
@@ -176,6 +201,26 @@ export const initRoutes = (app: express.Express) => {
             res.status(200).send(movieDeleted)
         } catch (error) {
             console.log(error)
+            res.status(500).send({ error: "Internal error" })
+        }
+    })
+
+    app.post("/movies", async (req: Request, res: Response) => {
+        const validation = movieValidation.validate(req.body)
+
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
+            return
+        }
+
+        const movieRequest = validation.value
+        const movieRepo = AppDataSource.getRepository(Movie)
+        try {
+            const movieCreated = await movieRepo.save(
+                movieRequest
+            )
+            res.status(201).send(movieCreated)
+        } catch (error) {
             res.status(500).send({ error: "Internal error" })
         }
     })
@@ -265,6 +310,26 @@ export const initRoutes = (app: express.Express) => {
         }
     })
 
+    app.post("/tickets", async (req: Request, res: Response) => {
+        const validation = ticketValidation.validate(req.body)
+
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
+            return
+        }
+
+        const ticketRequest = validation.value
+        const ticketRepo = AppDataSource.getRepository(Ticket)
+        try {
+            const ticketCreated = await ticketRepo.save(
+                ticketRequest
+            )
+            res.status(201).send(ticketCreated)
+        } catch (error) {
+            res.status(500).send({ error: "Internal error" })
+        }
+    })
+
 
     /* Routes pour les Rooms */
 
@@ -344,6 +409,26 @@ export const initRoutes = (app: express.Express) => {
             res.status(200).send(roomDeleted)
         } catch (error) {
             console.log(error)
+            res.status(500).send({ error: "Internal error" })
+        }
+    })
+
+    app.post("/rooms", async (req: Request, res: Response) => {
+        const validation = roomValidation.validate(req.body)
+
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
+            return
+        }
+
+        const roomRequest = validation.value
+        const roomRepo = AppDataSource.getRepository(Room)
+        try {
+            const roomCreated = await roomRepo.save(
+                roomRequest
+            )
+            res.status(201).send(roomCreated)
+        } catch (error) {
             res.status(500).send({ error: "Internal error" })
         }
     })
