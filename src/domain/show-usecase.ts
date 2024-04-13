@@ -1,4 +1,4 @@
-import { DataSource } from "typeorm";
+import { DataSource, DeleteResult } from "typeorm";
 import { Show } from "../database/entities/show";
 import { ShowRequest } from "../handlers/validators/show-validator";
 import { Movie } from "../database/entities/movie";
@@ -79,10 +79,14 @@ export class ShowUsecase {
             return new Error(`Movie ${showData.movieId} not found`);
         }
 
+        const endAt = new Date(showData.startAt.getTime());
+        endAt.setMinutes(endAt.getMinutes() + movie.duration + 30);
+
         const newShow = new Show();
         newShow.room = room;
         newShow.movie = movie;
         newShow.startAt = new Date(showData.startAt);
+        newShow.endAt = endAt;
         newShow.state = showData.state;
 
         return await showRepository.save(newShow);
@@ -98,5 +102,20 @@ export class ShowUsecase {
 
         const showUpdated = await repo.save(showFound);
         return showUpdated;
+    }
+
+    async deleteShow(showId: number): Promise<DeleteResult> {
+        const showRepository = this.db.getRepository(Show);
+
+        if (this.getShowById(showId) == null) {
+            console.log("introuvable")
+        }
+
+        try {
+            return await showRepository.delete(showId);
+        } catch (error) {
+            console.error("Failed to delete show with ID:", showId, error);
+            throw error;
+        }
     }
 }

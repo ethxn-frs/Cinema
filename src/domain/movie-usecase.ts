@@ -42,18 +42,20 @@ export class MovieUseCase {
 
     async createMovie(movieData: MovieRequest): Promise<Movie | Error> {
         const movieRepository = this.db.getRepository(Movie);
-        const imageRepository = this.db.getRepository(Image);
-
-        const image = await imageRepository.findOneBy({ id: movieData.imageId });
-
-        if (!image) {
-            return new Error(`Room ${movieData.imageId} not found`);
-        }
 
         const newMovie = new Movie();
-        newMovie.image = image;
         newMovie.description = movieData.description;
         newMovie.name = movieData.name;
+        newMovie.duration = movieData.duration;
+
+        if (movieData.imageId) {
+            const imageRepository = this.db.getRepository(Image);
+            const image = await imageRepository.findOneBy({ id: movieData.imageId });
+            if (!image) {
+                return new Error(`Room ${movieData.imageId} not found`);
+            }
+            newMovie.image = image;
+        }
 
         return await movieRepository.save(newMovie);
     }

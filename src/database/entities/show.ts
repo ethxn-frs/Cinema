@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Room } from "./room";
 import { Movie } from "./movie";
 import { ShowState } from "../../enumerators/ShowState";
@@ -14,6 +14,7 @@ export class Show {
     room!: Room;
 
     @OneToOne(() => Movie, (movie) => movie.show)
+    @JoinColumn()
     movie!: Movie;
 
     @CreateDateColumn({ type: "datetime" })

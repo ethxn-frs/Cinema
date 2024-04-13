@@ -42,6 +42,7 @@ export const showRoutes = (app: express.Express) => {
                 return;
             }
 
+            console.log("encore la")
             const showId = validationResult.value.id;
             const showUsecase = new ShowUsecase(AppDataSource);
             const show = await showUsecase.getShowById(showId);
@@ -67,17 +68,11 @@ export const showRoutes = (app: express.Express) => {
                 res.status(400).send(generateValidationErrorMessage(validationResult.error.details))
                 return
             }
-            const showId = validationResult.value
+            const showId = validationResult.value.id
+            const showUseCase = new ShowUsecase(AppDataSource);
+            const result = showUseCase.deleteShow(showId);
 
-            const showRepository = AppDataSource.getRepository(Show)
-            const show = await showRepository.findOneBy({ id: showId.id })
-            if (show === null) {
-                res.status(404).send({ "error": `show ${showId.id} not found` })
-                return
-            }
-
-            const showDeleted = await showRepository.remove(show)
-            res.status(200).send(showDeleted)
+            res.status(200).send(result);
         } catch (error) {
             console.log(error)
             res.status(500).send({ error: "Internal error" })
