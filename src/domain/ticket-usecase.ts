@@ -24,4 +24,17 @@ export class TicketUseCase {
         const [tickets, totalCount] = await query.getManyAndCount();
         return { tickets, totalCount };
     }
+
+    async updateTicket(id: number, priceMax?: number): Promise<Ticket | null>{
+        const repo = this.db.getRepository(Ticket)
+        const ticketFound = await repo.findOneBy({id})
+        
+        if(ticketFound === null) return null;
+
+        if(priceMax)
+            ticketFound.price = priceMax
+        
+        const ticketUpdated = await repo.save(ticketFound)
+        return ticketUpdated;
+    }
 }

@@ -18,4 +18,15 @@ export class MovieUseCase {
         const [movies, totalCount] = await query.getManyAndCount();
         return { movies, totalCount };
     }
+
+    async updateMovie(id: number): Promise<Movie | null>{
+        const repo = this.db.getRepository(Movie)
+        const movieFound = await repo.findOneBy({id})
+        
+        if(movieFound === null) return null;
+        
+        const movieUpdated = await repo.save(movieFound)
+        return movieUpdated;
+    }
+
 }

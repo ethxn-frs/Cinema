@@ -18,4 +18,14 @@ export class RoomUseCase {
         const [rooms, totalCount] = await query.getManyAndCount();
         return { rooms, totalCount };
     }
+
+    async updateRoom(id: number): Promise<Room | null>{
+        const repo = this.db.getRepository(Room)
+        const roomFound = await repo.findOneBy({id})
+        
+        if(roomFound === null) return null;
+        
+        const roomUpdated = await repo.save(roomFound)
+        return roomUpdated;
+    }
 }

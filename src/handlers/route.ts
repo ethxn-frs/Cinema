@@ -1,11 +1,11 @@
 import express, { Request, Response } from "express";
 import { generateValidationErrorMessage } from "./validators/generate-validation-message";
 import { AppDataSource } from "../database/database";
-import { listShowsValidation, showIdValidation } from "./validators/show-validator";
+import { listShowsValidation, showIdValidation, updateShowValidation } from "./validators/show-validator";
 import { ShowUsecase } from "../domain/show-usecase";
-import { listMovieValidation, movieIdValidation } from "./validators/movie-validator";
-import { listTicketValidation, ticketIdValidation } from "./validators/ticket-validator";
-import { listRoomValidation, roomIdValidation } from "./validators/room-validator";
+import { listMovieValidation, movieIdValidation, updateMovieValidation } from "./validators/movie-validator";
+import { listTicketValidation, ticketIdValidation, updateTicketValidation } from "./validators/ticket-validator";
+import { listRoomValidation, roomIdValidation, updateRoomValidation } from "./validators/room-validator";
 import { MovieUseCase } from "../domain/movie-usecase";
 import { DataSource } from "typeorm";
 import { TicketUseCase } from "../domain/ticket-usecase";
@@ -68,6 +68,30 @@ export const initRoutes = (app: express.Express) => {
         catch (error) {
             console.log(error)
             res.status(500).send({ "error": "Internal error" })
+        }
+
+    })
+
+    // update a show by id
+    app.patch("/shows/:id", async(req: Request, res: Response) => {
+        const validation = updateShowValidation.validate({...req.params, ...req.body})
+        if(validation.error){
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
+            return
+        }
+        const updateShowRequest = validation.value
+        try{
+            const showUsecase = new ShowUsecase(AppDataSource)
+            const updateShow = await showUsecase.updateShow(updateShowRequest.id, {...updateShowRequest})
+            if(updateShow === null){
+                res.status(404).send({"error": `show ${updateShowRequest.id} not found`})
+                return
+            }
+            res.status(200).send(updateShow)
+        }
+        catch(error){
+            console.log(error)
+            res.status(500).send({"error": "Internal error"})
         }
 
     })
@@ -151,6 +175,29 @@ export const initRoutes = (app: express.Express) => {
         catch (error) {
             console.log(error)
             res.status(500).send({ "error": "Internal error" })
+        }
+    })
+    
+    // update a movie by id
+    app.patch("/movies/:id", async(req: Request, res: Response) => {
+        const validation = updateMovieValidation.validate({...req.params, ...req.body})
+        if(validation.error){
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
+            return
+        }
+        const updateMovieRequest = validation.value
+        try{
+            const movieUsecase = new MovieUseCase(AppDataSource)
+            const updateMovie = await movieUsecase.updateMovie(updateMovieRequest.id)
+            if(updateMovie === null){
+                res.status(404).send({"error": `movie ${updateMovieRequest.id} not found`})
+                return
+            }
+            res.status(200).send(updateMovie)
+        }
+        catch(error){
+            console.log(error)
+            res.status(500).send({"error": "Internal error"})
         }
     })
 
@@ -238,6 +285,31 @@ export const initRoutes = (app: express.Express) => {
 
 
     })
+    //update a ticket by id
+    app.patch("/tickets/:id", async(req: Request, res: Response) => {
+        const validation = updateTicketValidation.validate({...req.params, ...req.body})
+        if(validation.error){
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
+            return
+        }
+        const updateTicketRequest = validation.value
+        try{
+            const ticketUsecase = new TicketUseCase(AppDataSource)
+            const updateTicket = await ticketUsecase.updateTicket(updateTicketRequest.id, updateTicketRequest.price)
+            if(updateTicket === null){
+                res.status(404).send({"error": `show ${updateTicketRequest.id} not found`})
+                return
+            }
+            res.status(200).send(updateTicket)
+        }
+        catch(error){
+            console.log(error)
+            res.status(500).send({"error": "Internal error"})
+        }
+
+    })
+
+
 
     // delete a ticket by id
     app.delete("/tickets/:id", async (req: Request, res: Response) => {
@@ -321,6 +393,29 @@ export const initRoutes = (app: express.Express) => {
             res.status(500).send({ "error": "Internal error" })
         }
     })
+    // update a room by id
+    app.patch("/rooms/:id", async(req: Request, res: Response) => {
+        const validation = updateRoomValidation.validate({...req.params, ...req.body})
+        if(validation.error){
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
+            return
+        }
+        const updateRoomRequest = validation.value
+        try{
+            const roomUsecase = new RoomUseCase(AppDataSource)
+            const updateRoom = await roomUsecase.updateRoom(updateRoomRequest.id)
+            if(updateRoom === null){
+                res.status(404).send({"error": `room ${updateRoomRequest.id} not found`})
+                return
+            }
+            res.status(200).send(updateRoom)
+        }
+        catch(error){
+            console.log(error)
+            res.status(500).send({"error": "Internal error"})
+        }
+    })
+
 
     // delete a room by id
     app.delete("/rooms/:id", async (req: Request, res: Response) => {
