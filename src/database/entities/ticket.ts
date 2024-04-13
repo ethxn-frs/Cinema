@@ -8,31 +8,31 @@ import { number } from "joi";
 export class Ticket {
 
     @PrimaryGeneratedColumn()
-    id: number
+    id!: number;
 
     @ManyToOne(() => User, (user) => user.tickets)
-    user: User;
+    user!: User;
 
     @ManyToOne(() => Show, (show) => show.tickets)
-    show: Show;
+    show!: Show;
 
     @Column()
-    type: TicketType;
+    type!: TicketType;
 
     @Column()
-    used: Boolean;
+    used!: Boolean;
 
     @Column()
-    price: number;
+    price!: number;
 
-    constructor(id: number, user: User, show: Show, type: TicketType, used: Boolean, price: number) {
+    constructor(id?: number, user?: User, show?: Show, type?: TicketType, used?: Boolean, price?: number) {
 
-        this.id = id;
-        this.user = user;
-        this.show = show;
-        this.type = type;
-        this.used = used;
-        this.price = price;
+        if (id) this.id = id;
+        if (user) this.user = user;
+        if (show) this.show = show;
+        if (type) this.type = type;
+        if (used) this.used = used;
+        if (price) this.price = price;
     }
 
 }

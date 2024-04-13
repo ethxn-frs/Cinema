@@ -12,7 +12,7 @@ export const roomValidation = Joi.object<RoomRequest>({
         .required(),
     state: Joi.boolean().required(),
     handicapAvailable: Joi.boolean().required(),
-    capacity: Joi.number().min(1).required(),
+    capacity: Joi.number().min(15).max(30).required(),
 
 }).options({ abortEarly: false })
 
