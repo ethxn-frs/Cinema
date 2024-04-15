@@ -5,6 +5,7 @@ import { movieRoutes } from "./handlers/routes/movies-route";
 import { roomRoutes } from "./handlers/routes/rooms-route";
 import { ticketRoutes } from "./handlers/routes/tickets-route";
 import { imageRoutes } from "./handlers/routes/images-route";
+import { userRoutes } from "./handlers/routes/users-route";
 
 
 const main = async () => {
@@ -26,6 +27,7 @@ const main = async () => {
     ticketRoutes(app);
     roomRoutes(app);
     imageRoutes(app);
+    userRoutes(app);
 
     app.listen(port, () => {
         console.log(`Server running on port ${port}`);
