@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { LoginUserValidation, UserTicketListValidatort, UserTransationListValidatort, creatUser, showUserSoldValidatort, userValidation } from "../validators/user-validator";
+import { LoginUserValidation, creatUser, showUserSoldValidatort, userValidation } from "../validators/user-validator";
 import { AppDataSource } from "../../database/database";
 import { User } from "../../database/entities/user";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
@@ -102,81 +102,4 @@ export const userRoutes = (app: express.Express) => {
             res.status(500).send({ error: "Internal error" })
         }
     });
-
-    app.get('/users/:id/transactions', async (req, res) => {
-        try {
-            const showuserTransationvalidatort = UserTransationListValidatort.validate(req.body)
-            if (showuserTransationvalidatort.error) {
-                res.status(400).send(generateValidationErrorMessage(showuserTransationvalidatort.error.details))
-                return
-            }
-
-            if (showuserTransationvalidatort.value.roles === 'Admin') {
-                res.status(200).send(showuserTransationvalidatort.value.transactions)
-            }
-            else if (showuserTransationvalidatort.value.roles === 'Client') {
-                const usertransation = AppDataSource.getRepository(User)
-                const transation = await usertransation.findOneBy({ id: showuserTransationvalidatort.value.id })
-                if (transation === null) {
-                    res.status(404).send({ "error": `product ${showuserTransationvalidatort.value.id} not found` })
-                    return
-                }
-                res.status(200).send(transation.transactions)
-            }
-            else {
-                res.status(401).send({ error: 'error' });
-            }
-
-        } catch (error) {
-            console.log(error)
-            res.status(500).send({ error: "Internal error" })
-        }
-    });
-
-    app.get('/users/:id/tickets', async (req, res) => {
-        try {
-            const UserTicketList = UserTicketListValidatort.validate(req.body)
-            if (UserTicketList.error) {
-                res.status(400).send(generateValidationErrorMessage(UserTicketList.error.details))
-                return
-            }
-            const userticket = AppDataSource.getRepository(User)
-
-            if (UserTicketList.value.roles === 'Admin') {
-                res.status(200).send(UserTicketList.value.tickets)
-            }
-            else if (UserTicketList.value.roles === 'Client') {
-                const ticket = await userticket.findOneBy({ id: UserTicketList.value.id })
-                if (ticket === null) {
-                    res.status(404).send({ "error": `product ${UserTicketList.value.id} not found` })
-                    return
-                }
-                res.status(200).send(ticket.tickets)
-            }
-            else {
-                res.status(401).send({ error: 'error' });
-            }
-
-        } catch (error) {
-            console.log(error)
-            res.status(500).send({ error: "Internal error" })
-        }
-    });
-
-    app.get('/users/:id/role', async (req, res) => {
-        // Logique pour vérifier et retourner le rôle de l'utilisateur
-    });
-
-    // A revoir
-    /* app.post("/users",(req: Request, res: Response)=>{
- 
-         const uservalidation = userValidation.validate(req.query)
-         if (uservalidation.error) {
-             res.status(400).send(generateValidationErrorMessage(uservalidation.error.details))
-             return
-         }
-         return res.json(userValidation);
-     })*/
-
-    //
 }
