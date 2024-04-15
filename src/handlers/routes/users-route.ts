@@ -1,9 +1,10 @@
 import express, { Request, Response } from "express";
-import { LoginUserValidation, creatUser, showUserSoldValidatort, userValidation } from "../validators/user-validator";
+import { LoginUserValidation, showUserSoldValidatort, userValidation } from "../validators/user-validator";
 import { AppDataSource } from "../../database/database";
 import { User } from "../../database/entities/user";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
 import { hash, compare } from "bcrypt";
+import { UserUseCase } from "../../domain/user-usecase";
 
 export const userRoutes = (app: express.Express) => {
 
@@ -18,25 +19,21 @@ export const userRoutes = (app: express.Express) => {
 
     // inscription  utilisateur
     app.post('/auth/signup', async (req: Request, res: Response) => {
-        try {
-            const createuserRequest = creatUser.validate(req.body)
 
-            if (createuserRequest.error) {
-                res.status(400).send(generateValidationErrorMessage(createuserRequest.error.details))
-                return
-            }
-            const createUserRequest = createuserRequest.value // récupère les données
-            const hashedPassword = await hash(createUserRequest.password, 10); //hash le mot de passe
-            const userRepository = AppDataSource.getRepository(User)
+        const validation = userValidation.validate(req.body)
 
-            const newUser = userRepository.save({
-                login: createUserRequest.login,
-                password: hashedPassword,
-                solde: 0
-            });
-
-            res.status(201).send({ newUser })
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
             return
+        }
+        const userRequested = validation.value // récupère les données
+        const userUseCase = new UserUseCase(AppDataSource);
+
+        try {
+
+            const result = await userUseCase.createUser(userRequested);
+
+            return res.status(201).send(result);
         } catch (error) {
             console.log(error)
             res.status(500).send({ "error": "internal error retry later" })

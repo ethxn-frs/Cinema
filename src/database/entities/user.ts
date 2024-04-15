@@ -5,39 +5,39 @@ import { Ticket } from "./ticket"
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
-    id: number
+    id!: number
 
     @Column({
         unique: true
     })
-    login: string
+    login!: string
 
     @Column()
-    password: string
+    password!: string
 
     @CreateDateColumn({ type: "datetime" })
-    createdAt: Date
+    createdAt!: Date
 
     @Column()
-    sold: number
+    sold!: number
 
     @Column("text")
-    roles: string;
+    roles!: string;
 
     @OneToMany(() => Transaction, (transaction) => transaction.user)
-    transactions: Transaction[];
+    transactions!: Transaction[];
 
     @OneToMany(() => Ticket, (ticket) => ticket.user)
-    tickets: Ticket[];
+    tickets!: Ticket[];
 
-    constructor(id: number, login: string, password: string, createdAt: Date, sold: number, roles: string, transactions: Transaction[], tickets: Ticket[]) {
-        this.id = id;
-        this.login = login;
-        this.password = password;
-        this.createdAt = createdAt;
-        this.sold = sold;
-        this.roles = roles;
-        this.transactions = transactions;
-        this.tickets = tickets
+    constructor(id?: number, login?: string, password?: string, createdAt?: Date, sold?: number, roles?: string, transactions?: Transaction[], tickets?: Ticket[]) {
+        if (id) this.id = id;
+        if (login) this.login = login;
+        if (password) this.password = password;
+        if (createdAt) this.createdAt = createdAt;
+        if (sold) this.sold = sold;
+        if (roles) this.roles = roles;
+        if (transactions) this.transactions = transactions;
+        if (tickets) this.tickets = tickets
     }
 }

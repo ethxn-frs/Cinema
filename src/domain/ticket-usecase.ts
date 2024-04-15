@@ -24,4 +24,11 @@ export class TicketUseCase {
         const [tickets, totalCount] = await query.getManyAndCount();
         return { tickets, totalCount };
     }
+
+    async getTicketById(ticketId: number): Promise<Ticket | null> {
+        const ticketRepository = this.db.getRepository(Ticket);
+        return await ticketRepository.findOne({
+            where: { id: ticketId }
+        });
+    }
 }

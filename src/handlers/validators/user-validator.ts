@@ -4,26 +4,20 @@ export interface UserRequest {
     login: string,
     password: string,
     createdAt: Date,
-    sold: number,
+    sold?: number,
     roles: string,
-    transactions: [],
-    tickets: [],
+    transactionId?: number[];
+    ticketId?: number[];
 }
 
 export const userValidation = Joi.object<UserRequest>({
     login: Joi.string().min(5).required(),
     password: Joi.string().min(8).required(),
     createdAt: Joi.date().required(),
-    sold: Joi.number().min(0).required(),
-    roles: Joi.array().required(),
-    transactions: Joi.array().items(Joi.object().keys({
-        id: Joi.number().required(),
-        amount: Joi.number().required(),
-    })),
-    tickets: Joi.array().items(Joi.object().keys({
-        id: Joi.number().required(),
-        event: Joi.string().required(),
-    })),
+    sold: Joi.number().min(0).optional(),
+    roles: Joi.string().min(1).required(),
+    transactionId: Joi.array().optional(),
+    ticketId: Joi.array().optional()
 }).options({ abortEarly: false })
 
 
@@ -70,14 +64,14 @@ export interface UserIdValidatior {
     id: number,
 }
 
-export interface createUserRequest {
+export interface CreateUserRequest {
     login: string,
     password: string,
     sold: number,
     roles: string
 }
 
-export const creatUser = Joi.object<createUserRequest>({
+export const createUser = Joi.object<CreateUserRequest>({
     login: Joi.string().min(5).required(),
     password: Joi.string().min(8).required(),
     sold: Joi.number().min(0).required(),
