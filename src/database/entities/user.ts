@@ -21,8 +21,8 @@ export class User {
     @Column()
     sold: number
 
-    @Column()
-    roles: string
+    @Column("text")
+    roles: string;
 
     @OneToMany(() => Transaction, (transaction) => transaction.user)
     transactions: Transaction[];

@@ -1,48 +1,47 @@
-import { Column, OneToOne } from "typeorm"
+import { Column, OneToMany, OneToOne } from "typeorm"
 import { PrimaryGeneratedColumn } from "typeorm/decorator/columns/PrimaryGeneratedColumn"
 import { Entity } from "typeorm/decorator/entity/Entity"
 import { Show } from "./show"
-import { faDharmachakra } from "@fortawesome/free-solid-svg-icons"
+//import { faDharmachakra } from "@fortawesome/free-solid-svg-icons"
 
 
 @Entity()
 export class Room {
 
     @PrimaryGeneratedColumn()
-    id: number
+    id!: number
 
     @Column({
         unique: true
     })
-    name: string
+    name!: string
 
     @Column()
-    description: string
+    description!: string
 
     @Column()
-    type: string
+    type!: string
 
     @Column()
-    state: boolean
+    state!: boolean
 
     @Column()
-    handicapAvailable: boolean
+    handicapAvailable!: boolean
 
     @Column()
-    capacity: number
+    capacity!: number
 
-    @OneToOne(() => Show, (show) => show.room)
-    show: Show;
+    @OneToMany(() => Show, (show) => show.room)
+    shows!: Show[]
 
-
-    constructor(id: number, name: string, description: string, type: string, state: boolean, handicapAvailable: boolean, capacity: number, show: Show) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.type = type;
-        this.state = state;
-        this.handicapAvailable = handicapAvailable;
-        this.capacity = capacity;
-        this.show = show;
+    constructor(id?: number, name?: string, description?: string, type?: string, state?: boolean, handicapAvailable?: boolean, capacity?: number, shows?: Show[]) {
+        if (id) this.id = id;
+        if (name) this.name = name;
+        if (description) this.description = description;
+        if (type) this.type = type;
+        if (state) this.state = state;
+        if (handicapAvailable) this.handicapAvailable = handicapAvailable;
+        if (capacity) this.capacity = capacity;
+        if (shows) this.shows = shows;
     }
 }

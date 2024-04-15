@@ -1,5 +1,4 @@
 import Joi from "joi";
-import { Show } from "../../database/entities/show";
 
 export const roomValidation = Joi.object<RoomRequest>({
     name: Joi.string()
@@ -13,8 +12,7 @@ export const roomValidation = Joi.object<RoomRequest>({
         .required(),
     state: Joi.boolean().required(),
     handicapAvailable: Joi.boolean().required(),
-    capacity: Joi.number().min(1).required(),
-    show: Show,
+    capacity: Joi.number().min(15).max(30).required(),
 
 }).options({ abortEarly: false })
 
@@ -25,7 +23,6 @@ export interface RoomRequest {
     state: boolean
     handicapAvailable: boolean
     capacity: number
-    show: Show;
 }
 
 export const listRoomValidation = Joi.object<ListRoomRequest>({
