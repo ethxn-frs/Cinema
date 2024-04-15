@@ -1,29 +1,18 @@
 import Joi from "joi";
-import { Movie } from "../../database/entities/movie";
-import { Room } from "../../database/entities/room";
-import { Ticket } from "../../database/entities/ticket";
 import { ShowState } from "../../enumerators/ShowState";
 
 export const showValidation = Joi.object<ShowRequest>({
-    name: Joi.string()
-        .min(3)
-        .required(),
-    room: Room,
-    movie: Movie,
+    roomId: Joi.number().min(1).required(),
+    movieId: Joi.number().min(1).required(),
     startAt: Joi.date().required(),
-    endAt: Joi.date().required(),
-    state: ShowState,
-    tickets: [Ticket],
+    state: Joi.string().valid(ShowState.ACTIVE, ShowState.CANCELED),
 }).options({ abortEarly: false })
 
 export interface ShowRequest {
-    name: string,
-    room: Room,
-    movie: Movie,
+    roomId: number,
+    movieId: number
     startAt: Date
-    endAt: Date
     state: ShowState,
-    tickets: [Ticket],
 }
 
 export const listShowsValidation = Joi.object<ListShowRequest>({
