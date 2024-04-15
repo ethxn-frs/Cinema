@@ -1,6 +1,16 @@
-import Joi from "joi";
+import Joi, { number } from "joi";
 import { Transaction } from "../../database/entities/transaction";
 import { Ticket } from "../../database/entities/ticket";
+
+export interface UserRequest {
+    login: string,
+    password: string,
+    createdAt: Date,
+    sold: number,
+    roles: string,
+    transactions: [],
+    tickets: [],
+}
 
 export const userValidation = Joi.object<UserRequest>({
     login: Joi.string()
@@ -10,57 +20,100 @@ export const userValidation = Joi.object<UserRequest>({
     createdAt: Joi.date().required(),
     sold: Joi.number().min(0).required(),
     roles: Joi.array().required(),
-    transactions: Joi.array().required(),
-    tickets: Joi.array().required(),
+    transactions: Joi.array().items(Joi.object().keys({
+        id: Joi.number().required(),
+        amount: Joi.number().required(),
+    })).required(),
+    tickets: Joi.array().items(Joi.object().keys({
+        id: Joi.number().required(),
+        event: Joi.string().required(),
+    })).required(),
 }).options({ abortEarly: false })
 
-export interface UserRequest {
+
+export interface createUserRequest{
     login: string,
     password: string,
-    createdAt: Date,
     sold: number,
-    roles: [string],
-    transactions: [Transaction],
-    tickets: [Ticket],
 }
 
-export const listUserValidation = Joi.object<ListUserRequest>({
-    page: Joi.number().min(1).optional(),
-    limit: Joi.number().min(1).optional(),
+export const creatUser = Joi.object<createUserRequest>({
+    login: Joi.string().min(5).required(),
+    password: Joi.string().min(8).required(),
+    sold: Joi.number().min(0).required(),  
+})
+
+export interface LoginUser {
+    login: string,
+    password: string,
+}
+
+export const LoginUserValidation = Joi.object<LoginUser>({
+    login: Joi.string().min(5).required(),
+    password: Joi.string().min(8).required(),
 })
 
 
-export interface ListUserRequest {
-    page?: number
-    limit?: number
+/*export interface TransactionValidator{
+    findAll(): any;
+    id: number,
+    transactions: [],
+    roles: string
 }
 
-export const updateUserValidation = Joi.object<UpdateUserRequest>({
-    id: Joi.number().required(),
-    login: Joi.string()
-        .min(5)
-        .optional(),
-    password: Joi.string().min(8).optional(),
-    sold: Joi.number().min(0).optional(),
-    roles: Joi.array().optional(),
-    transactions: Joi.array().optional(),
-    tickets: Joi.array().optional(),
+export const ListUserTransactionValidator =Joi.object<TransactionValidator>({
+    id: Joi.number(),
+    transactions: Joi.array().items(Joi.object().keys({
+        id: Joi.number().required(),
+        amount: Joi.number().required(),
+    })).required(),
+    roles: Joi.string()
+})*/
+
+//view solde
+
+export interface showUserSold{
+    id: number,
+    sold: number,
+}
+
+export const showUserSoldValidatort = Joi.object<showUserSold>({
+    id : Joi.number(),
+    sold: Joi.number().min(0).required(),
 })
 
-export interface UpdateUserRequest {
-    id: number
-    login?: string,
-    password?: string,
-    sold?: number,
-    roles?: [string],
-    transactions?: [Transaction],
-    tickets?: [Ticket],
+//view transaction
+export interface UserTransation{
+    id: number,
+    transactions: [],
+    roles: string,
 }
 
-export const userIdValidation = Joi.object<UserIdRequest>({
-    id: Joi.number().required(),
+export const UserTransationListValidatort = Joi.object<UserTransation>({
+    id : Joi.number(),
+    transactions: Joi.array().items(Joi.object().keys({
+        id: Joi.number().required(),
+        amount: Joi.number().required(),
+    })).required(),
+    roles: Joi.array().required(),
 })
 
-export interface UserIdRequest {
-    id: number
+//view ticket
+export interface UserTicket{
+    id: number,
+    tickets: [],
+    roles: string,
 }
+
+export const UserTicketListValidatort = Joi.object<UserTicket>({
+    id : Joi.number(),
+    tickets: Joi.array().items(Joi.object().keys({
+        id: Joi.number().required(),
+        event: Joi.string().required(),
+    })).required(),
+    roles: Joi.array().required(),
+})
+
+
+
+
