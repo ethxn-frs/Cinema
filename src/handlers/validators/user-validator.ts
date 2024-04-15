@@ -1,6 +1,4 @@
 import Joi, { number } from "joi";
-import { Transaction } from "../../database/entities/transaction";
-import { Ticket } from "../../database/entities/ticket";
 
 export interface UserRequest {
     login: string,
@@ -40,7 +38,7 @@ export interface ListUserRequest {
     limit?: number
 }
 
-export interface UserValidationRequest{
+export interface UserValidationRequest {
     login: string,
     password: string,
     roles: string,
@@ -55,24 +53,24 @@ export const UserValidationRequest = Joi.object<UserValidationRequest>({
 
 
 export const showUserSoldValidatort = Joi.object<showUserSold>({
-    id : Joi.number().required(),
+    id: Joi.number().required(),
     sold: Joi.number().min(0),
 })
 
-export interface showUserSold{
+export interface showUserSold {
     id: number,
     sold: number,
 }
 
 export const UserIdValidator = Joi.object<UserIdValidatior>({
-    id : Joi.number().required(),
+    id: Joi.number().required(),
 })
 
-export interface UserIdValidatior{
+export interface UserIdValidatior {
     id: number,
 }
 
-export interface createUserRequest{
+export interface createUserRequest {
     login: string,
     password: string,
     sold: number,
@@ -82,7 +80,7 @@ export interface createUserRequest{
 export const creatUser = Joi.object<createUserRequest>({
     login: Joi.string().min(5).required(),
     password: Joi.string().min(8).required(),
-    sold: Joi.number().min(0).required(),  
+    sold: Joi.number().min(0).required(),
     roles: Joi.string().required()
 })
 
@@ -97,53 +95,10 @@ export const LoginUserValidation = Joi.object<LoginUser>({
     password: Joi.string().min(8).required(),
 })
 
-export interface userUpDateSolde{
+export interface userUpDateSolde {
     sold: number
 }
 
 export const userUpDateSolde = Joi.object<userUpDateSolde>({
     sold: Joi.number().min(0).required(),
 })
-
-/*
-//view transaction
-export interface UserTransation{
-    id: number,
-    transactions: [],
-    roles: string,
-}
-
-export const UserTransationListValidatort = Joi.object<UserTransation>({
-    id : Joi.number(),
-    transactions: Joi.array().items(Joi.object().keys({
-        id: Joi.number().required(),
-        amount: Joi.number().required(),
-    })).required(),
-    roles: Joi.array().required(),
-})
-
-//view ticket
-export interface UserTicket{
-    id: number,
-    tickets: [],
-    roles: string,
-}
-
-export const UserTicketListValidatort = Joi.object<UserTicket>({
-    id : Joi.number(),
-    tickets: Joi.array().items(Joi.object().keys({
-        id: Joi.number().required(),
-        event: Joi.string().required(),
-    })).required(),
-    roles: Joi.array().required(),
-})
-
-export const listUser = Joi.object<ListUserRequest>({
-    page: Joi.number().min(1).optional(),
-    limit: Joi.number().min(1).optional(),
-})
-
-export interface ListUserRequest {
-    page?: number
-    limit?: number
-}*/
