@@ -32,6 +32,7 @@ export const transactionRoutes = (app: express.Express) => {
         }
     })
 
+    //get by id
     app.get("/transactions/:id", async (req: Request, res: Response) => {
 
         try {
@@ -53,4 +54,23 @@ export const transactionRoutes = (app: express.Express) => {
         }
     })
 
+    //delete by id
+    app.delete("/transactions/:id", async (req: Request, res: Response) => {
+        try {
+            const validationResult = transactionIdValidation.validate(req.params)
+
+            if (validationResult.error) {
+                res.status(400).send(generateValidationErrorMessage(validationResult.error.details))
+                return
+            }
+            const transactionId = validationResult.value.id
+            const transactionUseCase = new TransactionUseCase(AppDataSource);
+            const result = transactionUseCase.deleteTransaction(transactionId);
+
+            res.status(200).send(result);
+        } catch (error) {
+            console.log(error)
+            res.status(500).send({ error: "Internal error" })
+        }
+    })
 }

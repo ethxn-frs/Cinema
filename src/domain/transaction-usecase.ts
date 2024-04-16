@@ -5,6 +5,7 @@ import { Transaction } from "../database/entities/transaction";
 export interface ListTransactionFilter {
     limit: number;
     page: number;
+    userId: number;
 }
 
 export class TransactionUseCase {
@@ -23,6 +24,10 @@ export class TransactionUseCase {
 
         query.skip((listTransactionFilter.page - 1) * listTransactionFilter.limit);
         query.take(listTransactionFilter.limit);
+
+        if (listTransactionFilter.userId != null) {
+            query.andWhere('transaction.userId = :userID', { userID: listTransactionFilter.userId })
+        }
 
         const [transactions, totalCount] = await query.getManyAndCount();
         return { transactions, totalCount };

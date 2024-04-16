@@ -56,7 +56,7 @@ export interface showUserSold {
     sold: number,
 }
 
-export const UserIdValidator = Joi.object<UserIdValidatior>({
+export const userIdValidator = Joi.object<UserIdValidatior>({
     id: Joi.number().required(),
 })
 

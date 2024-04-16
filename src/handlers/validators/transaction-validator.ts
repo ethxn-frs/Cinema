@@ -24,12 +24,14 @@ export interface TransactionRequest {
 export const listTransactionValidation = Joi.object<ListTransactionRequest>({
     page: Joi.number().min(1).optional(),
     limit: Joi.number().min(1).optional(),
+    userId: Joi.number().min(1).optional(),
 })
 
 
 export interface ListTransactionRequest {
     page?: number
     limit?: number
+    userId?: number
 }
 
 export const updateTransactionValidation = Joi.object<UpdateTransactionRequest>({

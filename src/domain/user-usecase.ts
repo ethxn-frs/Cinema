@@ -4,6 +4,8 @@ import { UserRequest } from "../handlers/validators/user-validator";
 import { hash } from "bcrypt";
 import { Ticket } from "../database/entities/ticket";
 import { Transaction } from "../database/entities/transaction";
+import { ListTransactionFilter, TransactionUseCase } from "./transaction-usecase";
+import { AppDataSource } from "../database/database";
 
 
 export interface ListUserCase {
@@ -12,6 +14,7 @@ export interface ListUserCase {
 }
 
 export class UserUseCase {
+
     constructor(private readonly db: DataSource) { }
 
     async listUser(lisuser: ListUserCase): Promise<{ user: User[], total: number }> {
@@ -34,7 +37,7 @@ export class UserUseCase {
 
         const userRepository = this.db.getRepository(User);
         const transactionRepository = this.db.getRepository(Transaction);
-        const ticketRepository = this.db.getRepository(Ticket)
+        const ticketRepository = this.db.getRepository(Ticket);
         let transactions: Transaction[] = [];
         let tickets: Ticket[] = [];
 
@@ -77,5 +80,27 @@ export class UserUseCase {
         }
         newUser.tickets = tickets;
         return userRepository.save(newUser);
+    }
+
+    async getUserById(userId: number): Promise<User | null> {
+        const userRepository = this.db.getRepository(User);
+        return await userRepository.findOne({
+            where: { id: userId }
+        });
+    }
+
+    async getTransactionsFromUserId(userId: number): Promise<Transaction[] | null> {
+
+        const user = this.getUserById(userId);
+
+        if (user == null) {
+            return null;
+        }
+
+        let listTransactionFilter: ListTransactionFilter;
+        listTransactionFilter.userId = userId
+
+        const transactionUseCase = new TransactionUseCase(AppDataSource);
+        const result = await transactionUseCase.listTransaction(listTransactionFilter);
     }
 }

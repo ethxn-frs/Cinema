@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { LoginUserValidation, showUserSoldValidatort, userValidation } from "../validators/user-validator";
+import { LoginUserValidation, UserIdValidator, showUserSoldValidatort, userIdValidator, userValidation } from "../validators/user-validator";
 import { AppDataSource } from "../../database/database";
 import { User } from "../../database/entities/user";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
@@ -95,6 +95,25 @@ export const userRoutes = (app: express.Express) => {
             res.status(200).send(solde.sold)
         } catch (error) {
             console.log(error)
+            res.status(500).send({ error: "Internal error" })
+        }
+    });
+
+    app.get('/users/:id/transactions', async (req, res) => {
+        try {
+            const validation = userIdValidator.validate(req.params);
+            if (validation.error) {
+                res.status(400).send(generateValidationErrorMessage(validation.error.details));
+                return;
+            }
+            const userId = validation.value.id
+
+            const userUseCase = new UserUseCase(AppDataSource);
+            const userTransactions = await userUseCase.getTransactionsFromUserId(userId);
+            res.status(200).send(userTransactions);
+
+            res.status(200).send(userTransactions)
+        } catch (error) {
             res.status(500).send({ error: "Internal error" })
         }
     });
