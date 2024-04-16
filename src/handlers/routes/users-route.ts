@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { LoginUserValidation, UserIdValidator, showUserSoldValidatort, userIdValidator, userValidation } from "../validators/user-validator";
+import { LoginUserValidation, listUserValidation, showUserSoldValidatort, userIdValidator, userValidation } from "../validators/user-validator";
 import { AppDataSource } from "../../database/database";
 import { User } from "../../database/entities/user";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
@@ -8,15 +8,30 @@ import { UserUseCase } from "../../domain/user-usecase";
 
 export const userRoutes = (app: express.Express) => {
 
-    app.get("/users", (req: Request, res: Response) => {
-        const uservalidation = userValidation.validate(req.query)
-        if (uservalidation.error) {
-            res.status(400).send(generateValidationErrorMessage(uservalidation.error.details))
-            return
-        }
-        return res.json(userValidation);
-    })
+    app.get("/users", async (req: Request, res: Response) => {
+        const validation = listUserValidation.validate(req.query)
 
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
+        }
+        const listUsersRequest = validation.value
+
+        let limit = 50
+        if (listUsersRequest.limit)
+            limit = listUsersRequest.limit
+
+        const page = listUsersRequest.page ?? 1
+
+        try {
+            const userUseCase = new UserUseCase(AppDataSource)
+            const listUser = await userUseCase.listUser({ ...listUsersRequest, page, limit })
+            res.status(200).send(listUser)
+        }
+        catch (error) {
+            console.log(error)
+            res.status(500).send({ error: "Internal error" })
+        }
+    })
     // inscription  utilisateur
     app.post('/auth/signup', async (req: Request, res: Response) => {
 
@@ -26,7 +41,7 @@ export const userRoutes = (app: express.Express) => {
             res.status(400).send(generateValidationErrorMessage(validation.error.details))
             return
         }
-        const userRequested = validation.value // récupère les données
+        const userRequested = validation.value
         const userUseCase = new UserUseCase(AppDataSource);
 
         try {

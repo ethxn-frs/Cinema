@@ -1,9 +1,8 @@
 import express, { Request, Response } from "express";
-import { listTransactionValidation, transactionIdValidation } from "../validators/transaction-validator";
+import { listTransactionValidation, transactionIdValidation, transactionValidation } from "../validators/transaction-validator";
 import { TransactionUseCase } from "../../domain/transaction-usecase";
 import { AppDataSource } from "../../database/database";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
-import { Transaction } from "typeorm";
 
 export const transactionRoutes = (app: express.Express) => {
 
@@ -73,4 +72,32 @@ export const transactionRoutes = (app: express.Express) => {
             res.status(500).send({ error: "Internal error" })
         }
     })
+
+    //create transaction
+    app.post("/transactions", async (req: Request, res: Response) => {
+
+        console.log("je")
+        const validation = transactionValidation.validate(req.body)
+
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
+            return
+        }
+        console.log("je")
+        const transactionRequested = validation.value
+        const transactionUseCase = new TransactionUseCase(AppDataSource);
+
+        try {
+
+            const result = await transactionUseCase.createTransaction(transactionRequested);
+            console.log("je")
+
+            return res.status(201).send(result);
+        } catch (error) {
+            console.log(error)
+            res.status(500).send({ "error": "internal error retry later" })
+            return
+        }
+    })
+
 }

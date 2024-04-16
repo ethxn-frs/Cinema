@@ -1,5 +1,8 @@
 import { DataSource, DeleteResult } from "typeorm";
 import { Transaction } from "../database/entities/transaction";
+import { TransactionRequest } from "../handlers/validators/transaction-validator";
+import { UserUseCase } from "./user-usecase";
+import { AppDataSource } from "../database/database";
 
 
 export interface ListTransactionFilter {
@@ -46,6 +49,34 @@ export class TransactionUseCase {
             console.error("Failed to delete transaction with ID:", transactionId, error);
             throw error;
         }
+    }
+
+    async createTransaction(transactionData: TransactionRequest): Promise<Transaction | Error> {
+        const userUseCase = new UserUseCase(AppDataSource);
+        const transactionRepository = this.db.getRepository(Transaction);
+
+        console.log("je suis la")
+        const user = await userUseCase.getUserById(transactionData.userId);
+
+        if (!user) {
+            console.log("bug")
+            return new Error(`User ${transactionData.userId} not found`);
+        }
+
+        console.log("je suis la")
+        const newTransaction = new Transaction();
+        console.log("je suis la")
+        newTransaction.user = user;
+        newTransaction.amount = transactionData.amount;
+        newTransaction.createdAt = new Date();
+        newTransaction.type = transactionData.type;
+
+        console.log("nt");
+        const result = await transactionRepository.save(newTransaction);
+        console.log("res");
+
+        return result;
+
     }
 
 }

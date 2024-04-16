@@ -6,6 +6,8 @@ import { roomRoutes } from "./handlers/routes/rooms-route";
 import { ticketRoutes } from "./handlers/routes/tickets-route";
 import { imageRoutes } from "./handlers/routes/images-route";
 import { userRoutes } from "./handlers/routes/users-route";
+import { Express } from "express-serve-static-core";
+import { transactionRoutes } from "./handlers/routes/transactions-route";
 
 
 const main = async () => {
@@ -28,6 +30,7 @@ const main = async () => {
     roomRoutes(app);
     imageRoutes(app);
     userRoutes(app);
+    transactionRoutes(app);
 
     app.listen(port, () => {
         console.log(`Server running on port ${port}`);

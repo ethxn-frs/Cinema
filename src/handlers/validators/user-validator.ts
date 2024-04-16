@@ -3,7 +3,6 @@ import Joi, { number } from "joi";
 export interface UserRequest {
     login: string,
     password: string,
-    createdAt: Date,
     sold?: number,
     roles: string,
     transactionId?: number[];
@@ -13,7 +12,6 @@ export interface UserRequest {
 export const userValidation = Joi.object<UserRequest>({
     login: Joi.string().min(5).required(),
     password: Joi.string().min(8).required(),
-    createdAt: Joi.date().required(),
     sold: Joi.number().min(0).optional(),
     roles: Joi.string().min(1).required(),
     transactionId: Joi.array().optional(),

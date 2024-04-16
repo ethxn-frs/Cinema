@@ -2,23 +2,21 @@ import Joi from "joi";
 import { User } from "../../database/entities/user";
 import { TransactionType } from "../../enumerators/TransactionType";
 
-export const productValidation = Joi.object<TransactionRequest>({
+export const transactionValidation = Joi.object<TransactionRequest>({
     name: Joi.string()
         .min(3)
         .required(),
-    user: User,
+    userId: Joi.number().min(1).required(),
     amount: Joi.number().required(),
-    type: TransactionType,
-    createdAt: Joi.date().required()
+    type: Joi.string().valid(TransactionType.DEPOSIT, TransactionType.PURCHASE, TransactionType.WITHDRAWAL),
 
 }).options({ abortEarly: false })
 
 export interface TransactionRequest {
-    name: string,
-    user: User;
+    name: string;
+    userId: number;
     amount: number;
     type: TransactionType;
-    createdAt: Date;
 }
 
 export const listTransactionValidation = Joi.object<ListTransactionRequest>({

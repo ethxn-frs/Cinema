@@ -45,6 +45,7 @@ export class UserUseCase {
         newUser.login = userData.login;
         newUser.password = await hash(userData.password, 10);
         newUser.roles = userData.roles;
+        newUser.createdAt = new Date();
 
         if (userData.sold != null) {
             newUser.sold = userData.sold;
@@ -90,17 +91,20 @@ export class UserUseCase {
     }
 
     async getTransactionsFromUserId(userId: number): Promise<Transaction[] | null> {
-
-        const user = this.getUserById(userId);
-
-        if (user == null) {
+        const user = await this.getUserById(userId);
+        if (!user) {
             return null;
         }
 
-        let listTransactionFilter: ListTransactionFilter;
-        listTransactionFilter.userId = userId
+        const listTransactionFilter: ListTransactionFilter = {
+            limit: 10,
+            page: 1,
+            userId: userId
+        };
 
         const transactionUseCase = new TransactionUseCase(AppDataSource);
         const result = await transactionUseCase.listTransaction(listTransactionFilter);
+
+        return result.transactions;
     }
 }
