@@ -7,26 +7,26 @@ export class Transaction {
 
 
     @PrimaryGeneratedColumn()
-    id: number;
+    id!: number;
 
     @ManyToOne(() => User, (userTransaction) => userTransaction.transactions)
-    user: User;
+    user!: User;
 
     @Column()
-    amount: number;
+    amount!: number;
 
     @Column()
-    type: TransactionType
+    type!: TransactionType;
 
     @CreateDateColumn({ type: "datetime" })
-    createdAt: Date
+    createdAt!: Date;
 
-    constructor(id: number, user: User, amount: number, type: TransactionType, createdAt: Date) {
-        this.id = id;
-        this.user = user;
-        this.amount = amount;
-        this.type = type;
-        this.createdAt = createdAt;
+    constructor(id?: number, user?: User, amount?: number, type?: TransactionType, createdAt?: Date) {
+        if (id) this.id = id;
+        if (user) this.user = user;
+        if (amount) this.amount = amount;
+        if (type) this.type = type;
+        if (createdAt) this.createdAt = createdAt;
     }
 
 }

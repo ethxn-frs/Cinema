@@ -3,11 +3,7 @@ import { User } from "../database/entities/user";
 import { UserRequest } from "../handlers/validators/user-validator";
 import { hash } from "bcrypt";
 import { Ticket } from "../database/entities/ticket";
-import { TransactionUseCase } from "./transaction-usecase";
-import { AppDataSource } from "../database/database";
 import { Transaction } from "../database/entities/transaction";
-import { TicketUseCase } from "./ticket-usecase";
-import { ticketValidation } from "../handlers/validators/ticket-validator";
 
 
 export interface ListUserCase {

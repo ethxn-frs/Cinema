@@ -52,7 +52,6 @@ export const userRoutes = (app: express.Express) => {
 
             const loginuser = LoginUser.value // récupère les données
             const hashedPassword = await hash(loginuser.password, 10); //hash le mot de passe
-            const userRepository = AppDataSource.getRepository(User)
 
             const match = await compare(hashedPassword, loginuser.password);
 
