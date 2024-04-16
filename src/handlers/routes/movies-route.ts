@@ -28,7 +28,6 @@ export const movieRoutes = (app: express.Express) => {
             res.status(200).send(listMovies)
         }
         catch (error) {
-            console.log(error)
             res.status(500).send({ error: "Internal error" })
         }
 
@@ -55,7 +54,6 @@ export const movieRoutes = (app: express.Express) => {
             res.status(200).send(movie)
         }
         catch (error) {
-            console.log(error)
             res.status(500).send({ "error": "Internal error" })
         }
     })
@@ -81,7 +79,6 @@ export const movieRoutes = (app: express.Express) => {
             const movieDeleted = await movieRepository.remove(movie)
             res.status(200).send(movieDeleted)
         } catch (error) {
-            console.log(error)
             res.status(500).send({ error: "Internal error" })
         }
     })

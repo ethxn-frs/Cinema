@@ -40,7 +40,7 @@ export class TransactionUseCase {
         const transactionRepository = this.db.getRepository(Transaction);
 
         if (this.getTransactionById(transactionId) == null) {
-            console.log("introuvable")
+            throw new Error(`Sho ${transactionId} not found`);
         }
 
         try {
@@ -55,25 +55,20 @@ export class TransactionUseCase {
         const userUseCase = new UserUseCase(AppDataSource);
         const transactionRepository = this.db.getRepository(Transaction);
 
-        console.log("je suis la")
         const user = await userUseCase.getUserById(transactionData.userId);
 
         if (!user) {
-            console.log("bug")
-            return new Error(`User ${transactionData.userId} not found`);
+            throw new Error(`User ${transactionData.userId} not found`);
         }
 
-        console.log("je suis la")
         const newTransaction = new Transaction();
-        console.log("je suis la")
         newTransaction.user = user;
         newTransaction.amount = transactionData.amount;
         newTransaction.createdAt = new Date();
         newTransaction.type = transactionData.type;
 
-        console.log("nt");
+        ("nt");
         const result = await transactionRepository.save(newTransaction);
-        console.log("res");
 
         return result;
 

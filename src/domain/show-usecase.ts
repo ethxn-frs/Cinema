@@ -108,7 +108,7 @@ export class ShowUsecase {
         const showRepository = this.db.getRepository(Show);
 
         if (this.getShowById(showId) == null) {
-            console.log("introuvable")
+            throw new Error(`Sho ${showId} not found`);
         }
 
         try {

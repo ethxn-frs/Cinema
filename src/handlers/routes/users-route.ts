@@ -126,8 +126,6 @@ export const userRoutes = (app: express.Express) => {
             const userUseCase = new UserUseCase(AppDataSource);
             const userTransactions = await userUseCase.getTransactionsFromUserId(userId);
             res.status(200).send(userTransactions);
-
-            res.status(200).send(userTransactions)
         } catch (error) {
             res.status(500).send({ error: "Internal error" })
         }
