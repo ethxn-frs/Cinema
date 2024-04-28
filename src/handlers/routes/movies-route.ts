@@ -103,4 +103,23 @@ export const movieRoutes = (app: express.Express) => {
         }
     })
 
+    app.get("/movies/:id/shows", async (req: Request, res: Response) => {
+        const validation = movieIdValidation.validate(req.params);
+
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
+            return
+        }
+
+        const movieIdRequest = validation.value.id
+        const movieUseCase = new MovieUseCase(AppDataSource)
+
+        try {
+            const movieShows = await movieUseCase.getMovieShows(movieIdRequest)
+            res.status(201).send(movieShows)
+        } catch (error) {
+            res.status(500).send({ error: "Internal error" })
+        }
+    })
+
 }

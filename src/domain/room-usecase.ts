@@ -33,4 +33,42 @@ export class RoomUseCase {
 
         return await roomRepository.save(newRoom);
     }
+
+    async getRoomById(roomId: number): Promise<{ room: Room | null, message?: string }> {
+        const roomRepository = this.db.getRepository(Room);
+
+        const room = await roomRepository.findOne({
+            where: { id: roomId }
+        });
+
+        if (room) {
+            if (room.state === false) {
+                return {
+                    room: room,
+                    message: "This room is currently under maintenance."
+                };
+            } else {
+
+                const roomWithRelations = await roomRepository.findOne({
+                    where: { id: roomId },
+                    relations: ["shows", "shows.movie"]
+                });
+                return { room: roomWithRelations };
+            }
+        }
+
+        return { room: null };
+    }
+
+
+    async getRoomShows(roomId: number): Promise<Room | null> {
+
+        const roomRepository = this.db.getRepository(Room);
+        return await roomRepository.findOne({
+            where: { id: roomId },
+            relations: {
+                shows: true,
+            }
+        });
+    }
 }

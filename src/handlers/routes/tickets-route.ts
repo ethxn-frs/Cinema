@@ -3,7 +3,7 @@ import { AppDataSource } from "../../database/database";
 import { Ticket } from "../../database/entities/ticket";
 import { TicketUseCase } from "../../domain/ticket-usecase";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
-import { listTicketValidation, ticketIdValidation, ticketValidation } from "../validators/ticket-validator";
+import { listTicketValidation, ticketIdValidation, ticketValidation, updateTicketValidation } from "../validators/ticket-validator";
 
 export const ticketRoutes = (app: express.Express) => {
 
@@ -36,27 +36,23 @@ export const ticketRoutes = (app: express.Express) => {
 
     //get a ticket by id
     app.get("/tickets/:id", async (req: Request, res: Response) => {
-        try {
-            const validationResult = ticketIdValidation.validate(req.params)
-            if (validationResult.error) {
-                res.status(400).send(generateValidationErrorMessage(validationResult.error.details))
-                return
-            }
 
-            const ticketID = validationResult.value
-            const ticketRepository = AppDataSource.getRepository(Ticket)
-            const ticket = await ticketRepository.findOneBy({ id: ticketID.id })
+        const validation = ticketIdValidation.validate(req.params)
 
-            if (ticket === null) {
-                res.status(404).send({ "error": `ticket ${ticketID.id} not found` })
-                return
-            }
-
-            res.status(200).send(ticket)
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
         }
-        catch (error) {
-            console.log(error)
-            res.status(500).send({ "error": "Internal error" })
+
+        const ticketId = validation.value.id
+        const ticketUseCase = new TicketUseCase(AppDataSource);
+
+        try {
+            const ticket = await ticketUseCase.getTicketById(
+                ticketId
+            )
+            res.status(201).send(ticket)
+        } catch (error) {
+            res.status(500).send({ error: "Internal error" })
         }
 
 
@@ -96,10 +92,11 @@ export const ticketRoutes = (app: express.Express) => {
             return
         }
 
-        const ticketRequest = validation.value
-        const ticketRepo = AppDataSource.getRepository(Ticket)
+        const ticketRequest = validation.value;
+        const ticketUseCase = new TicketUseCase(AppDataSource);
+
         try {
-            const ticketCreated = await ticketRepo.save(
+            const ticketCreated = await ticketUseCase.createTicket(
                 ticketRequest
             )
             res.status(201).send(ticketCreated)
@@ -107,4 +104,40 @@ export const ticketRoutes = (app: express.Express) => {
             res.status(500).send({ error: "Internal error" })
         }
     })
+
+    app.put("/tickets/:id", async (req: Request, res: Response) => {
+        const ticketIdValide = ticketIdValidation.validate(req.params)
+
+        if (ticketIdValide.error) {
+            res.status(400).send(generateValidationErrorMessage(ticketIdValide.error.details));
+            return;
+        }
+
+        const ticketId = ticketIdValide.value.id
+
+        const ticketData = req.body;
+
+        const validation = updateTicketValidation.validate(ticketData);
+
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details));
+            return;
+        }
+
+        const ticketUseCase = new TicketUseCase(AppDataSource);
+
+        try {
+            const updatedTicket = await ticketUseCase.updateTicket(ticketId, ticketData);
+
+            if (updatedTicket) {
+                res.status(200).send(updatedTicket);
+            } else {
+                res.status(404).send({ error: "Ticket not found or update failed." });
+            }
+        } catch (error) {
+            console.error("Update Ticket Error:", error);
+            res.status(500).send({ error: "Internal error" });
+        }
+    });
+
 }

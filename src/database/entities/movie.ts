@@ -17,19 +17,19 @@ export class Movie {
     @OneToOne(() => Image, (image) => image.movie)
     image!: Image;
 
-    @OneToMany(() => Show, (show) => show.room)
+    @OneToMany(() => Show, (shows) => shows.room)
     @JoinColumn()
-    show!: Show;
+    shows!: Show[];
 
     @Column()
     duration!: number;
 
-    constructor(id?: number, name?: string, description?: string, image?: Image, show?: Show, duration?: number) {
+    constructor(id?: number, name?: string, description?: string, image?: Image, shows?: Show[], duration?: number) {
         if (id) this.id = id;
         if (name) this.name = name;
         if (description) this.description = description;
         if (image) this.image = image;
-        if (show) this.show = show;
+        if (shows) this.shows = shows;
         if (duration) this.duration = duration;
     }
 }

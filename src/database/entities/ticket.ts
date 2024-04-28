@@ -1,8 +1,7 @@
-import { Collection, Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./user";
 import { Show } from "./show";
 import { TicketType } from "../../enumerators/TicketType";
-import { number } from "joi";
 
 @Entity()
 export class Ticket {
@@ -13,8 +12,9 @@ export class Ticket {
     @ManyToOne(() => User, (user) => user.tickets)
     user!: User;
 
-    @ManyToOne(() => Show, (show) => show.tickets)
-    show!: Show;
+    @ManyToMany(() => Show)
+    @JoinTable() 
+    shows!: Show[];
 
     @Column()
     type!: TicketType;
@@ -22,17 +22,13 @@ export class Ticket {
     @Column()
     used!: Boolean;
 
-    @Column()
-    price!: number;
-
-    constructor(id?: number, user?: User, show?: Show, type?: TicketType, used?: Boolean, price?: number) {
+    constructor(id?: number, user?: User, show?: Show[], type?: TicketType, used?: Boolean) {
 
         if (id) this.id = id;
         if (user) this.user = user;
-        if (show) this.show = show;
+        if (show) this.shows = show;
         if (type) this.type = type;
         if (used) this.used = used;
-        if (price) this.price = price;
     }
 
 }

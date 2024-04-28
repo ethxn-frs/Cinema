@@ -28,14 +28,12 @@ export class MovieUseCase {
     async getMovieById(movieId: number): Promise<Movie | null> {
 
         const movieRepository = this.db.getRepository(Movie);
-        const imageUseCase = new ImageUseCase(AppDataSource);
-
-        let movieWithImages = await imageUseCase.findByMovieId(movieId);
 
         return await movieRepository.findOne({
             where: { id: movieId },
             relations: {
                 image: true,
+                shows: true,
             }
         });
     }
@@ -58,5 +56,18 @@ export class MovieUseCase {
         }
 
         return await movieRepository.save(newMovie);
+    }
+
+    async getMovieShows(movieId: number): Promise<Movie | null> {
+
+        const movieRepository = this.db.getRepository(Movie);
+
+        return await movieRepository.findOne({
+            where: { id: movieId },
+            relations: {
+                image: true,
+                shows: true,
+            }
+        });
     }
 }

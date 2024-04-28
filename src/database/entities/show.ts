@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Room } from "./room";
 import { Movie } from "./movie";
 import { ShowState } from "../../enumerators/ShowState";
@@ -10,10 +10,10 @@ export class Show {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @ManyToOne(() => Room, (roomShow) => roomShow.shows)
+    @ManyToOne(() => Room, (room) => room.shows)
     room!: Room;
 
-    @OneToOne(() => Movie, (movie) => movie.show)
+    @OneToOne(() => Movie, (movie) => movie.shows)
     @JoinColumn()
     movie!: Movie;
 
@@ -26,7 +26,7 @@ export class Show {
     @Column()
     state!: ShowState;
 
-    @OneToMany(() => Ticket, (ticket) => ticket.user)
+    @ManyToMany(() => Ticket, ticket => ticket.shows)
     tickets!: Ticket[];
 
     constructor(id?: number, room?: Room, movie?: Movie, startAt?: Date, endAt?: Date, state?: ShowState, tickets?: Ticket[]) {

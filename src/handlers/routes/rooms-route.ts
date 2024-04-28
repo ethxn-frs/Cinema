@@ -37,26 +37,19 @@ export const roomRoutes = (app: express.Express) => {
 
     //get a room by id
     app.get("/rooms/:id", async (req: Request, res: Response) => {
-        try {
-            const validationResult = roomIdValidation.validate(req.params)
-            if (validationResult.error) {
-                res.status(400).send(generateValidationErrorMessage(validationResult.error.details))
-                return
-            }
-
-            const roomId = validationResult.value
-            const roomRepoistory = AppDataSource.getRepository(Room)
-            const room = roomRepoistory.findOneBy({ id: roomId.id })
-
-            if (room === null) {
-                res.status(404).send({ "error": `error room ${roomId.id} not found` })
-                return
-            }
-
-            res.status(200).send(room)
+        const validationResult = roomIdValidation.validate(req.params)
+        if (validationResult.error) {
+            res.status(400).send(generateValidationErrorMessage(validationResult.error.details))
+            return
         }
-        catch (error) {
-            console.log(error)
+
+        const roomId = validationResult.value.id
+        const roomUseCase = new RoomUseCase(AppDataSource)
+
+        try {
+            const room = await roomUseCase.getRoomById(roomId);
+            res.status(200).send(room)
+        } catch (error) {
             res.status(500).send({ "error": "Internal error" })
         }
     })
@@ -99,10 +92,29 @@ export const roomRoutes = (app: express.Express) => {
         const roomUsecase = new RoomUseCase(AppDataSource);
         try {
             const roomCreated = await roomUsecase.createRoom(roomRequest);
-
             res.status(201).send(roomCreated)
         } catch (error) {
             res.status(500).send({ error: "Internal error" })
+        }
+
+    })
+
+    app.get("rooms/:id/shows", async (req: Request, res: Response) => {
+        const validation = roomIdValidation.validate(req.params)
+        console.log("bonojur")
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
+            return
+        }
+
+        const roomIdRequest = validation.value.id
+        const roomUsecase = new RoomUseCase(AppDataSource);
+
+        try {
+            const roomShows = await roomUsecase.getRoomShows(roomIdRequest);
+            res.status(201).send(roomShows)
+        } catch (error) {
+            res.status(500).send({ error: "Interna: error" })
         }
     })
 }
