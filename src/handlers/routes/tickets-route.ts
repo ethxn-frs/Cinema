@@ -96,9 +96,7 @@ export const ticketRoutes = (app: express.Express) => {
         const ticketUseCase = new TicketUseCase(AppDataSource);
 
         try {
-            const ticketCreated = await ticketUseCase.createTicket(
-                ticketRequest
-            )
+            const ticketCreated = await ticketUseCase.createTicket(ticketRequest)
             res.status(201).send(ticketCreated)
         } catch (error) {
             res.status(500).send({ error: "Internal error" })

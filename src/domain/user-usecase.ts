@@ -1,11 +1,15 @@
-import { DataSource } from "typeorm";
-import { User } from "../database/entities/user";
-import { UpdateUserRequest, UserRequest } from "../handlers/validators/user-validator";
-import { hash } from "bcrypt";
-import { Ticket } from "../database/entities/ticket";
-import { Transaction } from "../database/entities/transaction";
-import { ListTransactionFilter, TransactionUseCase } from "./transaction-usecase";
-import { AppDataSource } from "../database/database";
+import {DataSource} from "typeorm";
+import {User} from "../database/entities/user";
+import {UpdateUserRequest, UserRequest} from "../handlers/validators/user-validator";
+import {hash} from "bcrypt";
+import {Ticket} from "../database/entities/ticket";
+import {Transaction} from "../database/entities/transaction";
+import {ListTransactionFilter, TransactionUseCase} from "./transaction-usecase";
+import {AppDataSource} from "../database/database";
+import {TicketType} from "../enumerators/TicketType";
+import {ListTicketFilter, TicketUseCase} from "./ticket-usecase";
+import {ticketValidation} from "../handlers/validators/ticket-validator";
+import {TransactionType} from "../enumerators/TransactionType";
 
 
 export interface ListUserCase {
@@ -97,7 +101,7 @@ export class UserUseCase {
         }
 
         const listTransactionFilter: ListTransactionFilter = {
-            limit: 10,
+            limit: 50,
             page: 1,
             userId: userId
         };
@@ -108,10 +112,29 @@ export class UserUseCase {
         return result.transactions;
     }
 
+    async getTicketsFromUserId(userId: number): Promise<Ticket[] | null> {
+        const user = await this.getUserById(userId);
+        if (!user) {
+            return null;
+        }
+
+        const listTicketFilter: ListTicketFilter = {
+            limit: 50,
+            page: 1,
+            userId: userId
+        };
+
+        const ticketUseCase  = new TicketUseCase(AppDataSource);;
+        const result = await ticketUseCase.listTicket(listTicketFilter);
+
+        return result.tickets;
+    }
+
     async updateUser(userId: number, userData: UpdateUserRequest): Promise<User | Error> {
         const userRepo = this.db.getRepository(User);
         const ticketRepo = this.db.getRepository(Ticket);
         const transactionRepo = this.db.getRepository(Transaction)
+        let transaction = new Transaction()
 
         const user = await userRepo.findOne({
             where: { id: userId },
@@ -124,14 +147,12 @@ export class UserUseCase {
         if (!user) {
             return new Error("User " + userId + " not found")
         }
-
         if (userData.login) {
             user.login = userData.login;
         }
         if (userData.password) {
             user.password = userData.password
         }
-
         if (userData.roles) {
 
             const currentRolesSet = new Set(user.roles.split(';').filter(role => role.trim()));
@@ -147,7 +168,6 @@ export class UserUseCase {
 
             user.roles = Array.from(currentRolesSet).join(';');
         }
-
         if (userData.sold) {
             const newSold = user.sold + userData.sold;
 
@@ -156,12 +176,17 @@ export class UserUseCase {
             }
 
             user.sold = newSold;
+            transaction.amount = userData.sold;
+            if (userData.sold < 0){
+                transaction.type = TransactionType.WITHDRAWAL
+            }
+            if (userData.sold > 0){
+                transaction.type = TransactionType.DEPOSIT
+            }
         }
-
-        if (userData.soldTT) {
+        if (userData.soldTT != null) {
             user.sold = userData.soldTT
         }
-
         if (userData.ticketId) {
             const ticket = await ticketRepo.findOneBy({ id: userData.ticketId })
 
@@ -179,7 +204,6 @@ export class UserUseCase {
 
             user.tickets = Array.from(userTickets);
         }
-
         if (userData.transactionId) {
             const transaction = await transactionRepo.findOneBy({ id: userData.transactionId })
 
@@ -198,6 +222,56 @@ export class UserUseCase {
             user.transactions = Array.from(userTransactions);
         }
 
-        return await userRepo.save(user);
+        transaction.createdAt = new Date()
+        transaction.user = user
+
+        const result =  await userRepo.save(user);
+        await transactionRepo.save(transaction);
+
+        return result;
+    }
+
+    async createUserTicket(userId: number, ticketType: TicketType): Promise<User | Error> {
+
+        const userRepo = this.db.getRepository(User);
+        const ticketUseCase = new TicketUseCase(AppDataSource);
+        const user = await userRepo.findOneBy({ id: userId });
+
+        if (!user) {
+            throw new Error("User " + userId + " not found")
+        }
+
+        let ticket: any = {
+            type: ticketType,
+            userId: user.id,
+        }
+
+        const sold = user.sold;
+
+        if (!sold || sold < 10) {
+            throw new Error("Not enough sold, please credit it")
+        } else if (ticket.type.ticketType == TicketType.NORMAL) {
+            if (sold < 10) {
+                throw new Error("Not enough sold, please credit it")
+            }
+            user.sold -= 10
+        } else if (ticket.type.ticketType == TicketType.SUPERTICKET) {
+            if (sold < 90) {
+                throw new Error("Not enough sold, please credit it")
+            }
+            user.sold -= 90
+        }
+
+        ticket.type = ticket.type.ticketType
+        const ticketValidate = ticketValidation.validate(ticket)
+
+        if (ticketValidate.error) {
+            throw new Error(ticketValidate.error.message)
+        }
+        const ticketValue = ticketValidate.value
+
+        await ticketUseCase.createTicket(ticketValue);
+
+        return userRepo.save(user);
     }
 }

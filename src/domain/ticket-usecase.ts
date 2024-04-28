@@ -10,7 +10,7 @@ import { Transaction } from "../database/entities/transaction";
 export interface ListTicketFilter {
     page: number
     limit: number
-    priceMax?: number
+    userId: number
 }
 
 
@@ -20,12 +20,12 @@ export class TicketUseCase {
     async listTicket(listTicketFilter: ListTicketFilter): Promise<{ tickets: Ticket[]; totalCount: number; }> {
         const query = this.db.createQueryBuilder(Ticket, 'ticket');
 
-        if (listTicketFilter.priceMax) {
-            query.andWhere('ticket.price <= :priceMax', { priceMax: listTicketFilter.priceMax })
-        }
-
         query.skip((listTicketFilter.page - 1) * listTicketFilter.limit);
         query.take(listTicketFilter.limit);
+
+        if (listTicketFilter.userId != null) {
+            query.andWhere('ticket.userId = :userID', { userID: listTicketFilter.userId })
+        }
 
         const [tickets, totalCount] = await query.getManyAndCount();
         return { tickets, totalCount };
@@ -40,8 +40,6 @@ export class TicketUseCase {
 
         if (user == null) {
             return new Error("Asksed user is unknown");
-        } else {
-
         }
 
         const newTicket = new Ticket();

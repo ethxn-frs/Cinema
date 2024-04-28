@@ -67,11 +67,7 @@ export class TransactionUseCase {
         newTransaction.createdAt = new Date();
         newTransaction.type = transactionData.type;
 
-        ("nt");
-        const result = await transactionRepository.save(newTransaction);
-
-        return result;
-
+        return await transactionRepository.save(newTransaction);
     }
 
 }

@@ -5,6 +5,7 @@ import { User } from "../../database/entities/user";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
 import { hash, compare } from "bcrypt";
 import { UserUseCase } from "../../domain/user-usecase";
+import { createTicketUser } from "../validators/ticket-validator";
 
 export const userRoutes = (app: express.Express) => {
 
@@ -112,7 +113,7 @@ export const userRoutes = (app: express.Express) => {
     });
 
     // route pour mettre a jour le solde
-    app.put('/users/:id/solde', async (req, res) => {
+    app.put('/users/:id/sold', async (req, res) => {
         const userIdValid = userIdValidator.validate(req.params)
 
         if (userIdValid.error) {
@@ -137,7 +138,9 @@ export const userRoutes = (app: express.Express) => {
         }
     });
 
-    app.put('/users/:id/ticket', async (req, res) => {
+    // pour acheter un ticket
+    app.put('/users/:id/tickets', async (req, res) => {
+        
         const userIdValid = userIdValidator.validate(req.params)
 
         if (userIdValid.error) {
@@ -146,19 +149,38 @@ export const userRoutes = (app: express.Express) => {
         }
 
         const userId = userIdValid.value.id
-
-        const userData = req.body;
-
-        const validation = updateUserRequest.validate(userData);
+        const userTicketData = req.body;
+        const validation = createTicketUser.validate(userTicketData);
 
         if (validation.error) {
             res.status(400).send(generateValidationErrorMessage(validation.error.details));
             return;
         }
 
-        const userUseCase = new UserUseCase(AppDataSource);
-        const user = await userUseCase.updateUser(userId, userData);
-
-
+        try {
+            const userUseCase = new UserUseCase(AppDataSource);
+            const user = await userUseCase.createUserTicket(userId, userTicketData);
+            return res.status(200).send(user)
+        } catch (error: any) {
+            return res.status(500).send("Error: " + error.message);
+        }
     });
+
+    // pour consulter ses tickets
+    app.get('/users/:id/tickets', async (req: Request, res: Response) => {
+        const userIdValid = userIdValidator.validate(req.params)
+
+        if (userIdValid.error) {
+            res.status(400).send(generateValidationErrorMessage(userIdValid.error.details));
+        }
+
+        const userId = userIdValid.value.id
+        const userUseCase = new UserUseCase(AppDataSource);
+        try {
+            const userTickets = await userUseCase.getTicketsFromUserId(userId);
+            res.status(200).send(userTickets);
+        } catch (error: any) {
+            res.status(500).send("Error: " + error.message);
+        }
+    })
 }

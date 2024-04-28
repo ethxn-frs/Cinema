@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { TicketType } from "../../enumerators/TicketType";
 
 export interface UserRequest {
     login: string,
@@ -67,3 +68,4 @@ export const updateUserRequest = Joi.object<UpdateUserRequest>({
     transactionId: Joi.number().min(1).optional(),
     ticketId: Joi.number().min(1).optional,
 })
+

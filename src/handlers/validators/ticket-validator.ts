@@ -43,3 +43,11 @@ export const ticketIdValidation = Joi.object<TicketIdRequest>({
 export interface TicketIdRequest {
     id: number
 }
+
+export interface CreateTicketUser {
+    ticketType: TicketType
+}
+
+export const createTicketUser = Joi.object<CreateTicketUser>({
+    ticketType: Joi.string().valid(TicketType.NORMAL, TicketType.SUPERTICKET).required(),
+})
