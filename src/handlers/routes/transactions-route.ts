@@ -76,22 +76,17 @@ export const transactionRoutes = (app: express.Express) => {
     //create transaction
     app.post("/transactions", async (req: Request, res: Response) => {
 
-        console.log("je")
         const validation = transactionValidation.validate(req.body)
 
         if (validation.error) {
             res.status(400).send(generateValidationErrorMessage(validation.error.details))
             return
         }
-        console.log("je")
         const transactionRequested = validation.value
         const transactionUseCase = new TransactionUseCase(AppDataSource);
 
         try {
-
             const result = await transactionUseCase.createTransaction(transactionRequested);
-            console.log("je")
-
             return res.status(201).send(result);
         } catch (error) {
             console.log(error)

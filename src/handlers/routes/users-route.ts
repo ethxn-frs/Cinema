@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { LoginUserValidation, listUserValidation, showUserSoldValidatort, userIdValidator, userValidation } from "../validators/user-validator";
+import { LoginUserValidation, listUserValidation, updateUserRequest, userIdValidator, userValidation } from "../validators/user-validator";
 import { AppDataSource } from "../../database/database";
 import { User } from "../../database/entities/user";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
@@ -32,7 +32,7 @@ export const userRoutes = (app: express.Express) => {
             res.status(500).send({ error: "Internal error" })
         }
     })
-    // inscription  utilisateur
+
     app.post('/auth/signup', async (req: Request, res: Response) => {
 
         const validation = userValidation.validate(req.body)
@@ -94,26 +94,6 @@ export const userRoutes = (app: express.Express) => {
         res.status(200).send({ message: 'Déconnexion réussie. Veuillez supprimer votre jeton.' });
     })
 
-    app.get('/users/:id/solde', async (req, res) => {
-        try {
-            const showusersoldvalidatort = showUserSoldValidatort.validate(req.body)
-            if (showusersoldvalidatort.error) {
-                res.status(400).send(generateValidationErrorMessage(showusersoldvalidatort.error.details))
-                return
-            }
-            const usersolde = AppDataSource.getRepository(User)
-            const solde = await usersolde.findOneBy({ id: showusersoldvalidatort.value.id })
-            if (solde === null) {
-                res.status(404).send({ "error": `product ${showusersoldvalidatort.value.id} not found` })
-                return
-            }
-            res.status(200).send(solde.sold)
-        } catch (error) {
-            console.log(error)
-            res.status(500).send({ error: "Internal error" })
-        }
-    });
-
     app.get('/users/:id/transactions', async (req, res) => {
         try {
             const validation = userIdValidator.validate(req.params);
@@ -129,5 +109,56 @@ export const userRoutes = (app: express.Express) => {
         } catch (error) {
             res.status(500).send({ error: "Internal error" })
         }
+    });
+
+    // route pour mettre a jour le solde
+    app.put('/users/:id/solde', async (req, res) => {
+        const userIdValid = userIdValidator.validate(req.params)
+
+        if (userIdValid.error) {
+            res.status(400).send(generateValidationErrorMessage(userIdValid.error.details));
+            return;
+        }
+
+        const userId = userIdValid.value.id
+        const userData = req.body;
+        const validation = updateUserRequest.validate(userData);
+
+        if (validation.error) {
+            return res.status(400).send(generateValidationErrorMessage(validation.error.details));
+        }
+
+        try {
+            const userUseCase = new UserUseCase(AppDataSource);
+            const user = await userUseCase.updateUser(userId, userData);
+            res.status(200).send(user)
+        } catch (error: any) {
+            res.status(500).send("Error: " + error.message);
+        }
+    });
+
+    app.put('/users/:id/ticket', async (req, res) => {
+        const userIdValid = userIdValidator.validate(req.params)
+
+        if (userIdValid.error) {
+            res.status(400).send(generateValidationErrorMessage(userIdValid.error.details));
+            return;
+        }
+
+        const userId = userIdValid.value.id
+
+        const userData = req.body;
+
+        const validation = updateUserRequest.validate(userData);
+
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details));
+            return;
+        }
+
+        const userUseCase = new UserUseCase(AppDataSource);
+        const user = await userUseCase.updateUser(userId, userData);
+
+
     });
 }
