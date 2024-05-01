@@ -7,6 +7,10 @@ import { ticketRoutes } from "./handlers/routes/tickets-route";
 import { imageRoutes } from "./handlers/routes/images-route";
 import { userRoutes } from "./handlers/routes/users-route";
 import { transactionRoutes } from "./handlers/routes/transactions-route";
+import path from "path";
+
+const logger: any = require('./config/logger');
+const cors = require('cors');
 
 
 const main = async () => {
@@ -21,7 +25,21 @@ const main = async () => {
         process.exit(1);
     }
 
+    app.use(cors({
+        origin: 'http://localhost:3030'
+    }));
+
+    app.use('/static', express.static(path.join(__dirname, 'src', 'images')));
     app.use(express.json());
+
+    app.use((req, res, next) => {
+        res.on('finish', () => {
+            const clientIp = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            logger.info(`${clientIp} - ${req.method} ${req.originalUrl} ${res.statusCode} `);
+        });
+
+        next();
+    });
 
     showRoutes(app);
     movieRoutes(app);

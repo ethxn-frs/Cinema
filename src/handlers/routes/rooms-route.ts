@@ -99,9 +99,8 @@ export const roomRoutes = (app: express.Express) => {
 
     })
 
-    app.get("rooms/:id/shows", async (req: Request, res: Response) => {
+    app.get("/rooms/:id/shows", async (req: Request, res: Response) => {
         const validation = roomIdValidation.validate(req.params)
-        console.log("bonojur")
         if (validation.error) {
             res.status(400).send(generateValidationErrorMessage(validation.error.details))
             return

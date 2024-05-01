@@ -50,7 +50,7 @@ export class MovieUseCase {
             const imageRepository = this.db.getRepository(Image);
             const image = await imageRepository.findOneBy({ id: movieData.imageId });
             if (!image) {
-                return new Error(`Room ${movieData.imageId} not found`);
+                return new Error(`Image ${movieData.imageId} not found`);
             }
             newMovie.image = image;
         }
