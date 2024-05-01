@@ -1,6 +1,6 @@
 import { DataSource, DeleteResult } from "typeorm";
 import { Show } from "../database/entities/show";
-import { ShowRequest } from "../handlers/validators/show-validator";
+import {ShowRequest, UpdateShowRequest} from "../handlers/validators/show-validator";
 import { Movie } from "../database/entities/movie";
 import { Room } from "../database/entities/room";
 
@@ -11,11 +11,6 @@ export interface ListShowFilter {
     startAtMax?: Date;
     endAtMin?: Date;
     endAtMax?: Date;
-}
-
-export interface UpdateShowParams {
-    startAt?: Date;
-    endAt?: Date;
 }
 
 export class ShowUsecase {
@@ -92,16 +87,15 @@ export class ShowUsecase {
         return await showRepository.save(newShow);
     }
 
-    async updateShow(id: number, { startAt, endAt }: UpdateShowParams): Promise<Show | null> {
+    async updateShow(id: number, updatedShow: UpdateShowRequest): Promise<Show | null> {
         const repo = this.db.getRepository(Show);
         const showFound = await repo.findOneBy({ id });
         if (showFound === null) return null;
 
-        if (startAt) showFound.startAt = startAt;
-        if (endAt) showFound.endAt = endAt;
+        if (updatedShow.startAt) showFound.startAt = updatedShow.startAt;
+        if (updatedShow.endAt) showFound.endAt = updatedShow.endAt;
 
-        const showUpdated = await repo.save(showFound);
-        return showUpdated;
+        return await repo.save(showFound);
     }
 
     async deleteShow(showId: number): Promise<DeleteResult> {

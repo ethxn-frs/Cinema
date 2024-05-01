@@ -1,9 +1,13 @@
 import express, { Request, Response } from "express";
 import { ShowUsecase } from "../../domain/show-usecase";
 import { AppDataSource } from "../../database/database";
-import { showValidation, showIdValidation, listShowsValidation } from "../validators/show-validator";
+import {
+    showValidation,
+    showIdValidation,
+    listShowsValidation,
+    updateShowValidation
+} from "../validators/show-validator";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
-import { Show } from "../../database/entities/show";
 
 export const showRoutes = (app: express.Express) => {
 
@@ -104,4 +108,32 @@ export const showRoutes = (app: express.Express) => {
             res.status(500).send({ error: "Internal error" });
         }
     });
+
+    app.put("/shows/:id", async (req: Request, res: Response) => {
+        const validationResult = showIdValidation.validate(req.params);
+
+        if (validationResult.error) {
+            res.status(400).send(generateValidationErrorMessage(validationResult.error.details));
+            return;
+        }
+
+        const validationUpdateShow =  updateShowValidation.validate(req.body);
+
+        const showId = validationResult.value.id;
+        const updateShow = validationUpdateShow.value
+        const showUsecase = new ShowUsecase(AppDataSource);
+
+        try {
+            const result =  await showUsecase.updateShow(showId, updateShow )
+
+            if (result) {
+                res.status(200).send(result);
+            } else {
+                res.status(404).send({ error: "Show not found or update failed." });
+            }
+        } catch (error) {
+            console.error("Update Show Error:", error);
+            res.status(500).send({ error: "Internal error" });
+        }
+    })
 }

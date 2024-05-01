@@ -14,12 +14,14 @@ export interface TicketRequest {
 export const listTicketValidation = Joi.object<ListTicketRequest>({
     page: Joi.number().min(1).optional(),
     limit: Joi.number().min(1).optional(),
+    userId: Joi.number().min(1).optional(),
 })
 
 
 export interface ListTicketRequest {
     page?: number
     limit?: number
+    userId?: number
 }
 
 export const updateTicketValidation = Joi.object<UpdateTicketRequest>({

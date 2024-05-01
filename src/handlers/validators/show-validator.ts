@@ -18,12 +18,19 @@ export interface ShowRequest {
 export const listShowsValidation = Joi.object<ListShowRequest>({
     page: Joi.number().min(1).optional(),
     limit: Joi.number().min(1).optional(),
+    startAtMin: Joi.date().optional(),
+    startAtMax: Joi.date().optional(),
+    endAtMin: Joi.date().optional(),
+    endAtMax: Joi.date().optional(),
 })
-
 
 export interface ListShowRequest {
     page?: number
     limit?: number
+    startAtMin?: Date;
+    startAtMax?: Date;
+    endAtMin?: Date;
+    endAtMax?: Date;
 }
 
 export const updateShowValidation = Joi.object<UpdateShowRequest>({
