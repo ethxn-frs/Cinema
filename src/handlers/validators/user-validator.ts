@@ -5,7 +5,7 @@ export interface UserRequest {
     login: string,
     password: string,
     sold?: number,
-    roles: string,
+    roles?: string,
     transactionId?: number[];
     ticketId?: number[];
 }
@@ -14,7 +14,7 @@ export const userValidation = Joi.object<UserRequest>({
     login: Joi.string().min(5).required(),
     password: Joi.string().min(8).required(),
     sold: Joi.number().min(0).optional(),
-    roles: Joi.string().min(1).required(),
+    roles: Joi.string().min(1).optional(),
     transactionId: Joi.array().optional(),
     ticketId: Joi.array().optional()
 }).options({ abortEarly: false })

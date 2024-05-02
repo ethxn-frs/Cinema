@@ -7,6 +7,7 @@ import { ticketRoutes } from "./handlers/routes/tickets-route";
 import { imageRoutes } from "./handlers/routes/images-route";
 import { userRoutes } from "./handlers/routes/users-route";
 import { transactionRoutes } from "./handlers/routes/transactions-route";
+require('dotenv').config();
 import path from "path";
 
 const logger: any = require('./config/logger');
@@ -23,6 +24,11 @@ const main = async () => {
     } catch (error) {
         console.error("Cannot contact database");
         process.exit(1);
+    }
+
+    if (!process.env.JWT_SECRET) {
+        console.error('FATAL ERROR: JWT_SECRET is not defined.');
+        process.exit(1); // Arrête l'application avec une erreur si JWT_SECRET n'est pas défini
     }
 
     app.use(cors({

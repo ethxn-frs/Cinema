@@ -22,6 +22,8 @@ export const roomRoutes = (app: express.Express) => {
             limit = lisRoomRequest.limit
 
         const page = lisRoomRequest.page ?? 1
+        const orderBy = lisRoomRequest.orderBy ?? 'id';
+        const ascending = lisRoomRequest.ascending ?? true;
 
         try {
             const roomUseCase = new RoomUseCase(AppDataSource)

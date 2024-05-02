@@ -28,12 +28,16 @@ export interface RoomRequest {
 export const listRoomValidation = Joi.object<ListRoomRequest>({
     page: Joi.number().min(1).optional(),
     limit: Joi.number().min(1).optional(),
+    ascending: Joi.boolean().optional(),
+    orderBy: Joi.string().min(1).optional(),
 })
 
 
 export interface ListRoomRequest {
     page?: number
     limit?: number
+    ascending?: boolean
+    orderBy?: string;
 }
 
 export const updateRoomValidation = Joi.object<UpdateRoomRequest>({

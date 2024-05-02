@@ -5,6 +5,8 @@ import { RoomRequest } from "../handlers/validators/room-validator";
 export interface ListRoomFilter {
     page: number
     limit: number
+    ascending?: boolean
+    orderBy?: string;
 }
 
 export class RoomUseCase {
@@ -15,6 +17,11 @@ export class RoomUseCase {
 
         query.skip((listRoomFilter.page - 1) * listRoomFilter.limit);
         query.take(listRoomFilter.limit);
+
+        if (listRoomFilter.orderBy) {
+            const direction = listRoomFilter.ascending ? 'ASC' : 'DESC';
+            query.orderBy(`room.${listRoomFilter.orderBy}`, direction);
+        }
 
         const [rooms, totalCount] = await query.getManyAndCount();
         return { rooms, totalCount };

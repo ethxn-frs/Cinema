@@ -7,6 +7,8 @@ import { Room } from "../database/entities/room";
 export interface ListShowFilter {
     limit: number;
     page: number;
+    ascending: boolean;
+    orderBy: string;
     startAtMin?: Date;
     startAtMax?: Date;
     endAtMin?: Date;
@@ -37,12 +39,17 @@ export class ShowUsecase {
         if (listShowFilter.endAtMax) {
             query.andWhere('show.endAt <= :endAtMax', { endAtMax: listShowFilter.endAtMax });
         }
+        if (listShowFilter.orderBy) {
+            const direction = listShowFilter.ascending ? 'ASC' : 'DESC';
+            query.orderBy(`show.${listShowFilter.orderBy}`, direction);
+        }
+
 
         query.skip((listShowFilter.page - 1) * listShowFilter.limit);
         query.take(listShowFilter.limit);
 
         const [shows, totalCount] = await query.getManyAndCount();
-        return {
+            return {
             shows,
             totalCount
         };
@@ -84,7 +91,7 @@ export class ShowUsecase {
         newShow.endAt = endAt;
         newShow.state = showData.state;
 
-        return await showRepository.save(newShow);
+        return  showRepository.save(newShow);
     }
 
     async updateShow(id: number, updatedShow: UpdateShowRequest): Promise<Show | null> {

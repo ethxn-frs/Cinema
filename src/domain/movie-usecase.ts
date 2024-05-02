@@ -8,6 +8,8 @@ import { AppDataSource } from "../database/database";
 export interface ListMovieFilter {
     limit: number;
     page: number;
+    ascending: boolean;
+    orderBy: string;
 }
 
 export class MovieUseCase {
@@ -18,8 +20,14 @@ export class MovieUseCase {
 
         query.leftJoinAndSelect('movie.image', 'image');
 
+        if (listMovieFilter.orderBy) {
+            const direction = listMovieFilter.ascending ? 'ASC' : 'DESC';
+            query.orderBy(`movie.${listMovieFilter.orderBy}`, direction);
+        }
+
         query.skip((listMovieFilter.page - 1) * listMovieFilter.limit);
         query.take(listMovieFilter.limit);
+
 
         const [movies, totalCount] = await query.getManyAndCount();
         return { movies, totalCount };

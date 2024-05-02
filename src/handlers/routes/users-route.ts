@@ -1,11 +1,12 @@
 import express, { Request, Response } from "express";
 import { LoginUserValidation, listUserValidation, updateUserRequest, userIdValidator, userValidation } from "../validators/user-validator";
 import { AppDataSource } from "../../database/database";
-import { User } from "../../database/entities/user";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
-import { hash, compare } from "bcrypt";
 import { UserUseCase } from "../../domain/user-usecase";
 import { createTicketUser } from "../validators/ticket-validator";
+import jwt = require("jsonwebtoken");
+import bcrypt = require("bcrypt");
+import {User} from "../../database/entities/user";
 
 export const userRoutes = (app: express.Express) => {
 
@@ -59,37 +60,50 @@ export const userRoutes = (app: express.Express) => {
 
     app.post('/auth/login', async (req: Request, res: Response) => {
         try {
-            const LoginUser = LoginUserValidation.validate(req.body)
+            const { error, value } = LoginUserValidation.validate(req.body);
 
-            if (LoginUser.error) {
-                res.status(400).send(generateValidationErrorMessage(LoginUser.error.details))
-                return
+            if (error) {
+                return res.status(400).send(generateValidationErrorMessage(error.details));
             }
 
-            const loginuser = LoginUser.value // récupère les données
-            const hashedPassword = await hash(loginuser.password, 10); //hash le mot de passe
+            const userRepository = AppDataSource.getRepository(User);
+            const user = await userRepository.findOneBy({ login: value.login });
 
-            const match = await compare(hashedPassword, loginuser.password);
-
-            if (match) {
-                res.send({ message: 'Connexion réussie' });
-                res.send({
-                    message: 'Connexion réussie',
-                    login: loginuser.login
-                })
-            }
-            else {
-                res.status(401).send({ error: 'Mot de passe incorrect' });
+            if (!user) {
+                return res.status(401).send({ error: 'Utilisateur non trouvé' });
             }
 
-            res.status(201).send({ loginuser })
-            return
+            const isValidPassword = await bcrypt.compare(value.password, user.password);
+
+            if (!isValidPassword) {
+                return res.status(401).send({ error: 'Mot de passe incorrect' });
+            }
+
+            // Assurer que la clé secrète JWT est définie
+            const jwtSecret = process.env.JWT_SECRET;
+            if (!jwtSecret) {
+                console.error('JWT_SECRET is not defined.');
+                return res.status(500).send({ error: 'Internal server error. Please contact the administrator.' });
+            }
+
+            const token = jwt.sign(
+                { userId: user.id, login: user.login },
+                jwtSecret,
+                { expiresIn: '1h' }
+            );
+
+            return res.status(200).send({
+                message: 'Connexion réussie',
+                token: token,
+                userId: user.id
+            });
+
         } catch (error) {
-            console.log(error)
-            res.status(500).send({ "error": "internal error retry later" })
-            return
+            console.error(error);
+            return res.status(500).send({ "error": "Internal error, please retry later" });
         }
-    })
+    });
+
 
     app.post('/auth/logout', (req, res) => {
         res.status(200).send({ message: 'Déconnexion réussie. Veuillez supprimer votre jeton.' });

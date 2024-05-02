@@ -13,25 +13,24 @@ export const movieRoutes = (app: express.Express) => {
 
         if (validation.error) {
             res.status(400).send(generateValidationErrorMessage(validation.error.details))
-            return
+            return;
         }
         const listMovieRequest = validation.value
 
-        let limit = 50
-        if (listMovieRequest.limit) {
-            limit = listMovieRequest.limit
-        }
-        const page = listMovieRequest.page ?? 1
+        const limit = listMovieRequest.limit ?? 10;
+        const ascending = listMovieRequest.ascending ?? true;
+        const page = listMovieRequest.page ?? 1;
+        const orderBy = listMovieRequest.orderBy ?? 'id';  // Assume 'name' is the default field for ordering
+
         try {
-            const movieUseCase = new MovieUseCase(AppDataSource)
-            const listMovies = await movieUseCase.listMovie({ ...listMovieRequest, page, limit })
-            res.status(200).send(listMovies)
+            const movieUseCase = new MovieUseCase(AppDataSource);
+            const listMovies = await movieUseCase.listMovie({ ...listMovieRequest, page, limit, ascending, orderBy });
+            res.status(200).send(listMovies);
         }
         catch (error) {
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({ error: "Internal error" });
         }
-
-    })
+    });
 
     //get a movie by id
     app.get("/movies/:id", async (req: Request, res: Response) => {

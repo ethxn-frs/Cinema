@@ -10,6 +10,7 @@ import {TicketType} from "../enumerators/TicketType";
 import {ListTicketFilter, TicketUseCase} from "./ticket-usecase";
 import {ticketValidation} from "../handlers/validators/ticket-validator";
 import {TransactionType} from "../enumerators/TransactionType";
+import {Repository} from "typeorm/repository/Repository";
 
 
 export interface ListUserCase {
@@ -48,7 +49,13 @@ export class UserUseCase {
         const newUser = new User();
         newUser.login = userData.login;
         newUser.password = await hash(userData.password, 10);
-        newUser.roles = userData.roles;
+
+        if (userData.roles){
+            newUser.roles = userData.roles;
+        } else {
+            newUser.roles = ' user';
+        }
+
         newUser.createdAt = new Date();
 
         if (userData.sold != null) {
@@ -58,31 +65,15 @@ export class UserUseCase {
         }
 
         if (userData.transactionId != null) {
-            userData.transactionId.forEach(
-                async x => {
-                    if (transactionRepository.findOne({ where: { id: x } }) != null) {
-                        const transactionTemp = await transactionRepository.findOne({ where: { id: x } });
-                        if (transactionTemp != null) {
-                            transactions.push(transactionTemp);
-                        }
-                    }
-                }
-            )
+            transactions = await this.resolveTransactions(userData.transactionId, transactionRepository);
         }
+
         newUser.transactions = transactions;
 
         if (userData.ticketId != null) {
-            userData.ticketId.forEach(
-                async x => {
-                    if (ticketRepository.findOne({ where: { id: x } }) != null) {
-                        const ticketTemp = await ticketRepository.findOne({ where: { id: x } });
-                        if (ticketTemp != null) {
-                            tickets.push(ticketTemp);
-                        }
-                    }
-                }
-            )
+            tickets = await this.resolveTickets(userData.ticketId, ticketRepository);
         }
+
         newUser.tickets = tickets;
         return userRepository.save(newUser);
     }
@@ -273,5 +264,19 @@ export class UserUseCase {
         await ticketUseCase.createTicket(ticketValue);
 
         return userRepo.save(user);
+    }
+
+    async resolveTransactions(transactionIds: number[], transactionRepository: Repository<Transaction>): Promise<Transaction[]> {
+        const transactions = await Promise.all(
+            transactionIds.map(id => transactionRepository.findOne({ where: { id } }))
+        );
+        return transactions.filter((t): t is Transaction => t !== null);
+    }
+
+    async resolveTickets(ticketIds: number[], ticketRepository: Repository<Ticket>): Promise<Ticket[]> {
+        const tickets = await Promise.all(
+            ticketIds.map(id => ticketRepository.findOne({ where: { id } }))
+        );
+        return tickets.filter((t): t is Ticket => t !== null);
     }
 }

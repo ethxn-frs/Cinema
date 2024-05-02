@@ -1,13 +1,34 @@
-import express, { Request, Response } from "express";
+import express, {NextFunction, Request, Response} from "express";
 import { listTransactionValidation, transactionIdValidation, transactionValidation } from "../validators/transaction-validator";
 import { TransactionUseCase } from "../../domain/transaction-usecase";
 import { AppDataSource } from "../../database/database";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
+import {VerifyErrors} from "jsonwebtoken";
+const jwt = require('jsonwebtoken');
 
 export const transactionRoutes = (app: express.Express) => {
 
+    const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
+        const authHeader = req.headers.authorization;
+        if (authHeader) {
+            const token = authHeader.split(' ')[1];
+
+            jwt.verify(token, process.env.JWT_SECRET as string, (err: VerifyErrors | null, user: object | undefined) => {
+                if (err) {
+                    return res.sendStatus(403); // Forbidden access
+                }
+
+                // @ts-ignore
+                req.user = user; // Assign the decoded user to the request object
+                next();
+            });
+        } else {
+           return res.sendStatus(401); // Unauthorized access
+        }
+    };
+
     //get all transactions
-    app.get("/transactions", async (req: Request, res: Response) => {
+    app.get("/transactions", authenticateJWT, async (req: Request, res: Response) => {
 
         const validation = listTransactionValidation.validate(req.query)
 
@@ -15,6 +36,14 @@ export const transactionRoutes = (app: express.Express) => {
             res.status(400).send(generateValidationErrorMessage(validation.error.details))
         }
         const listTransactionsRequest = validation.value
+
+        if (listTransactionsRequest.userId){
+            // @ts-ignore
+            if (listTransactionsRequest.userId != req.user.userId){
+                return res.status(401).send("UNAUTHORIZED")
+
+            }
+        }
 
         let limit = 50
         if (listTransactionsRequest.limit)

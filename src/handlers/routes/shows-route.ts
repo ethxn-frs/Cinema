@@ -25,11 +25,13 @@ export const showRoutes = (app: express.Express) => {
         if (listShowRequest.limit) {
             limit = listShowRequest.limit
         }
+        const orderBy = listShowRequest.orderBy ?? 'id';
+        const ascending = listShowRequest.ascending ?? true;
         const page = listShowRequest.page ?? 1
 
         try {
             const showUsecase = new ShowUsecase(AppDataSource);
-            const listShows = await showUsecase.listShow({ ...listShowRequest, page, limit })
+            const listShows = await showUsecase.listShow({ ...listShowRequest, page, limit, ascending, orderBy })
             res.status(200).send(listShows)
         } catch (error) {
             console.log(error)
