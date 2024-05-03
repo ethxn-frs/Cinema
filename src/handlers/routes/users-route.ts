@@ -35,6 +35,22 @@ export const userRoutes = (app: express.Express) => {
         }
     })
 
+    app.get("/users/:id", async (req: Request, res: Response) => {
+        const validation = userIdValidator.validate(req.params)
+
+        if (validation.error){
+            res.status(400).send(generateValidationErrorMessage(validation.error.details));
+        }
+        const userId = validation.value.id;
+        const userUseCase = new UserUseCase(AppDataSource)
+        try {
+            const user = await userUseCase.getUserById(userId);
+            res.status(200).send(user)
+        } catch (error) {
+            res.status(500).send({ error: "Internal error" })
+        }
+    })
+
     app.post('/auth/signup', async (req: Request, res: Response) => {
 
         const validation = userValidation.validate(req.body)
@@ -103,7 +119,6 @@ export const userRoutes = (app: express.Express) => {
             return res.status(500).send({ "error": "Internal error, please retry later" });
         }
     });
-
 
     app.post('/auth/logout', (req, res) => {
         res.status(200).send({ message: 'Déconnexion réussie. Veuillez supprimer votre jeton.' });

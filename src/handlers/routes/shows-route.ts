@@ -30,8 +30,8 @@ export const showRoutes = (app: express.Express) => {
         const page = listShowRequest.page ?? 1
 
         try {
-            const showUsecase = new ShowUsecase(AppDataSource);
-            const listShows = await showUsecase.listShow({ ...listShowRequest, page, limit, ascending, orderBy })
+            const showUseCase = new ShowUsecase(AppDataSource);
+            const listShows = await showUseCase.listShow({ ...listShowRequest, page, limit, ascending, orderBy })
             res.status(200).send(listShows)
         } catch (error) {
             console.log(error)
@@ -64,7 +64,6 @@ export const showRoutes = (app: express.Express) => {
         }
     });
 
-
     // delete a show by id
     app.delete("/shows/:id", async (req: Request, res: Response) => {
         try {
@@ -94,10 +93,10 @@ export const showRoutes = (app: express.Express) => {
         }
 
         const showRequest = validation.value;
-        const showUsecase = new ShowUsecase(AppDataSource);
+        const showUseCase = new ShowUsecase(AppDataSource);
 
         try {
-            const result = await showUsecase.createShow(showRequest);
+            const result = await showUseCase.createShow(showRequest);
 
             if (result instanceof Error) {
                 res.status(400).send({ "error": result.message });

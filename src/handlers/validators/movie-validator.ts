@@ -25,6 +25,7 @@ export const listMovieValidation = Joi.object<ListMovieRequest>({
     limit: Joi.number().min(1).optional(),
     ascending: Joi.boolean().optional(),
     orderBy: Joi.string().min(1).optional(),
+    name: Joi.string().min(1).optional(),
 })
 
 
@@ -32,7 +33,8 @@ export interface ListMovieRequest {
     page?: number
     limit?: number
     ascending?: boolean
-    orderBy?: string;
+    orderBy?: string
+    name?: string
 }
 
 export const updateMovieValidation = Joi.object<UpdateMovieRequest>({

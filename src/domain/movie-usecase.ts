@@ -10,6 +10,7 @@ export interface ListMovieFilter {
     page: number;
     ascending: boolean;
     orderBy: string;
+    name?: string;
 }
 
 export class MovieUseCase {
@@ -25,9 +26,12 @@ export class MovieUseCase {
             query.orderBy(`movie.${listMovieFilter.orderBy}`, direction);
         }
 
+        if (listMovieFilter.name) {
+            query.andWhere('movie.name LIKE :name', { name: `%${listMovieFilter.name}%` });
+        }
+
         query.skip((listMovieFilter.page - 1) * listMovieFilter.limit);
         query.take(listMovieFilter.limit);
-
 
         const [movies, totalCount] = await query.getManyAndCount();
         return { movies, totalCount };
