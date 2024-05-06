@@ -24,6 +24,7 @@ export const listShowsValidation = Joi.object<ListShowRequest>({
     startAtMax: Joi.date().optional(),
     endAtMin: Joi.date().optional(),
     endAtMax: Joi.date().optional(),
+    movieId: Joi.number().min(1).optional(),
 })
 
 export interface ListShowRequest {
@@ -35,6 +36,7 @@ export interface ListShowRequest {
     startAtMax?: Date;
     endAtMin?: Date;
     endAtMax?: Date;
+    movieId?: number;
 }
 
 export const updateShowValidation = Joi.object<UpdateShowRequest>({

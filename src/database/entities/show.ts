@@ -1,4 +1,13 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import {
+    Column,
+    CreateDateColumn,
+    DataSource,
+    Entity,
+    JoinColumn,
+    ManyToMany,
+    ManyToOne,
+    PrimaryGeneratedColumn
+} from "typeorm";
 import { Room } from "./room";
 import { Movie } from "./movie";
 import { ShowState } from "../../enumerators/ShowState";
@@ -13,8 +22,7 @@ export class Show {
     @ManyToOne(() => Room, (room) => room.shows)
     room!: Room;
 
-    @OneToOne(() => Movie, (movie) => movie.shows)
-    @JoinColumn()
+    @ManyToOne(() => Movie, (movie) => movie.shows)
     movie!: Movie;
 
     @CreateDateColumn({ type: "datetime" })
@@ -37,5 +45,22 @@ export class Show {
         if (endAt) this.endAt = endAt;
         if (state) this.state = state;
         if (tickets) this.tickets = tickets;
+    }
+
+    async takenPlacesCount(dataSource: DataSource): Promise<number> {
+        const count = await dataSource
+            .getRepository(Ticket)
+            .createQueryBuilder("ticket")
+            .innerJoin("ticket.shows", "show")
+            .where("show.id = :showId", { showId: this.id })
+            .andWhere("ticket.used = :used", { used: true })
+            .getCount();
+
+        return count;
+    }
+
+    async remainingPlacesCount(dataSource: DataSource): Promise<number> {
+        const takenCount = await this.takenPlacesCount(dataSource);
+        return this.room.capacity - takenCount;
     }
 }

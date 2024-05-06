@@ -17,7 +17,7 @@ export class Movie {
     @OneToOne(() => Image, (image) => image.movie)
     image!: Image;
 
-    @OneToMany(() => Show, (shows) => shows.room)
+    @OneToMany(() => Show, (show) => show.movie)
     @JoinColumn()
     shows!: Show[];
 

@@ -3,12 +3,16 @@ import { Transaction } from "../database/entities/transaction";
 import { TransactionRequest } from "../handlers/validators/transaction-validator";
 import { UserUseCase } from "./user-usecase";
 import { AppDataSource } from "../database/database";
+import {TransactionType} from "../enumerators/TransactionType";
 
 
 export interface ListTransactionFilter {
     limit: number;
     page: number;
     userId: number;
+    transactionType?: TransactionType;
+    amountMin?: number;
+    amountMax?: number;
 }
 
 export class TransactionUseCase {
@@ -30,6 +34,18 @@ export class TransactionUseCase {
 
         if (listTransactionFilter.userId != null) {
             query.andWhere('transaction.userId = :userID', { userID: listTransactionFilter.userId })
+        }
+
+        if (listTransactionFilter.transactionType != null){
+            query.andWhere('transaction.type = :type', { type: listTransactionFilter.transactionType });
+        }
+
+        if (listTransactionFilter.amountMin != null){
+            query.andWhere( 'transaction.amount >= :amountMin', {amountMin: listTransactionFilter.amountMin})
+        }
+
+        if (listTransactionFilter.amountMax != null){
+            query.andWhere('transaction.amount <= :amountMax', {amountMax: listTransactionFilter.amountMax})
         }
 
         const [transactions, totalCount] = await query.getManyAndCount();

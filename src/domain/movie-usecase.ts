@@ -38,15 +38,16 @@ export class MovieUseCase {
     }
 
     async getMovieById(movieId: number): Promise<Movie | null> {
-
         const movieRepository = this.db.getRepository(Movie);
 
         return await movieRepository.findOne({
             where: { id: movieId },
             relations: {
                 image: true,
-                shows: true,
-            }
+                shows: {
+                    room: true,
+                },
+            },
         });
     }
 

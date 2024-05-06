@@ -3,6 +3,13 @@ import { Show } from "../database/entities/show";
 import {ShowRequest, UpdateShowRequest} from "../handlers/validators/show-validator";
 import { Movie } from "../database/entities/movie";
 import { Room } from "../database/entities/room";
+import {User} from "../database/entities/user";
+import {Ticket} from "../database/entities/ticket";
+import {UserUseCase} from "./user-usecase";
+import {TicketType} from "../enumerators/TicketType";
+import {AppDataSource} from "../database/database";
+import {TicketUseCase} from "./ticket-usecase";
+import {UpdateTicketRequest} from "../handlers/validators/ticket-validator";
 
 export interface ListShowFilter {
     limit: number;
@@ -13,6 +20,7 @@ export interface ListShowFilter {
     startAtMax?: Date;
     endAtMin?: Date;
     endAtMax?: Date;
+    movieId?: number
 }
 
 export class ShowUsecase {
@@ -44,6 +52,9 @@ export class ShowUsecase {
             query.orderBy(`show.${listShowFilter.orderBy}`, direction);
         }
 
+        if (listShowFilter.movieId){
+            query.andWhere("show.movieId = :movieId", { movieId: listShowFilter.movieId });
+        }
 
         query.skip((listShowFilter.page - 1) * listShowFilter.limit);
         query.take(listShowFilter.limit);
@@ -118,5 +129,47 @@ export class ShowUsecase {
             console.error("Failed to delete show with ID:", showId, error);
             throw error;
         }
+    }
+
+    async bookShow(showId: number, ticketId: number): Promise<boolean> {
+        const showRepository = this.db.getRepository(Show);
+        const ticketRepository = this.db.getRepository(Ticket);
+        const ticketUseCase = new TicketUseCase(AppDataSource)
+        const show = await showRepository.findOneBy({id : showId});
+
+        if (show == null){
+            throw new Error(`Show ${showId} not found`);
+        }
+
+        const ticket = await ticketRepository.findOneBy({id : ticketId});
+
+        if (ticket == null){
+            throw new Error(`Ticket ${ticketId} not found`);
+        }
+
+        if (ticket.used){
+            throw new Error(`Ticket ${ticketId} already used`);
+        }
+
+        const ticketData: UpdateTicketRequest = {
+            showId: showId,
+        };
+
+        const result = await ticketUseCase.updateTicket(ticketId, ticketData);
+
+        return !!result;
+    }
+
+    async getRemainingPlaces(showId: number): Promise<number> {
+        const show = await this.db.getRepository(Show).findOne({
+            where: { id: showId },
+            relations: ["room"]
+        });
+
+        if (!show) {
+            throw new Error(`Show with ID ${showId} not found`);
+        }
+
+        return show.remainingPlacesCount(this.db);
     }
 }

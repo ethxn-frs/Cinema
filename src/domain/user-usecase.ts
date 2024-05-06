@@ -112,7 +112,8 @@ export class UserUseCase {
         const listTicketFilter: ListTicketFilter = {
             limit: 50,
             page: 1,
-            userId: userId
+            userId: userId,
+
         };
 
         const ticketUseCase  = new TicketUseCase(AppDataSource);;

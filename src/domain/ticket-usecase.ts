@@ -11,8 +11,9 @@ export interface ListTicketFilter {
     page: number
     limit: number
     userId: number
+    used?: boolean
+    ticketType?: TicketType
 }
-
 
 export class TicketUseCase {
     constructor(private readonly db: DataSource) { }
@@ -20,11 +21,21 @@ export class TicketUseCase {
     async listTicket(listTicketFilter: ListTicketFilter): Promise<{ tickets: Ticket[]; totalCount: number; }> {
         const query = this.db.createQueryBuilder(Ticket, 'ticket');
 
+        query.leftJoinAndSelect('ticket.shows', 'show');
+        query.leftJoinAndSelect('show.movie', 'movie');
         query.skip((listTicketFilter.page - 1) * listTicketFilter.limit);
         query.take(listTicketFilter.limit);
 
         if (listTicketFilter.userId != null) {
             query.andWhere('ticket.userId = :userID', { userID: listTicketFilter.userId })
+        }
+
+        if (listTicketFilter.used != null){
+            query.andWhere('ticket.used = :used', { used: listTicketFilter.used })
+        }
+
+        if (listTicketFilter.ticketType != null) {
+            query.andWhere('ticket.type = :type', { type: listTicketFilter.ticketType })
         }
 
         const [tickets, totalCount] = await query.getManyAndCount();
@@ -117,9 +128,9 @@ export class TicketUseCase {
         }
 
         if (ticket.type === TicketType.NORMAL) {
-            ticket.used = ticket.shows.length == 1 ? true : false;
+            ticket.used = ticket.shows.length == 1;
         } else if (ticket.type === TicketType.SUPERTICKET) {
-            ticket.used = ticket.shows.length == 10 ? true : false;
+            ticket.used = ticket.shows.length == 10;
         }
 
         return await ticketRepo.save(ticket);

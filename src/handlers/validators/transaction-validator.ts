@@ -1,6 +1,7 @@
 import Joi from "joi";
 import { User } from "../../database/entities/user";
 import { TransactionType } from "../../enumerators/TransactionType";
+import {TicketType} from "../../enumerators/TicketType";
 
 export const transactionValidation = Joi.object<TransactionRequest>({
     name: Joi.string()
@@ -23,6 +24,9 @@ export const listTransactionValidation = Joi.object<ListTransactionRequest>({
     page: Joi.number().min(1).optional(),
     limit: Joi.number().min(1).optional(),
     userId: Joi.number().min(1).optional(),
+    amountMax: Joi.number().min(1).optional(),
+    amountMin: Joi.number().min(1).optional(),
+    transactionType: Joi.string().valid(TransactionType.DEPOSIT, TransactionType.PURCHASE, TransactionType.WITHDRAWAL),
 })
 
 
@@ -30,6 +34,9 @@ export interface ListTransactionRequest {
     page?: number
     limit?: number
     userId?: number
+    amountMax?: number
+    amountMin?: number
+    transactionType?: TicketType
 }
 
 export const updateTransactionValidation = Joi.object<UpdateTransactionRequest>({

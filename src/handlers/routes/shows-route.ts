@@ -8,6 +8,7 @@ import {
     updateShowValidation
 } from "../validators/show-validator";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
+import {ticketIdValidation} from "../validators/ticket-validator";
 
 export const showRoutes = (app: express.Express) => {
 
@@ -137,4 +138,42 @@ export const showRoutes = (app: express.Express) => {
             res.status(500).send({ error: "Internal error" });
         }
     })
+
+    app.put("/shows/:id/book", async (req: Request, res: Response) => {
+        const validationResult = showIdValidation.validate(req.params);
+
+        if (validationResult.error) {
+            res.status(400).send(generateValidationErrorMessage(validationResult.error.details));
+            return;
+        }
+
+        const ticketIdValidate = ticketIdValidation.validate(req.body);
+
+        const showId = validationResult.value.id;
+        const ticketId = ticketIdValidate.value.id;
+        const showUsecase = new ShowUsecase(AppDataSource);
+
+        try {
+            const result =  await showUsecase.bookShow(showId, ticketId )
+
+            if (result) {
+                res.status(200).send(result);
+            } else {
+                res.status(404).send({ error: "Show not found or book failed." });
+            }
+        } catch (error) {
+            res.status(500).send({ error: "Internal error" });
+        }
+    })
+
+    app.get("/shows/:id/remaining-places", async (req, res) => {
+        try {
+            const showId = parseInt(req.params.id, 10);
+            const showUseCase = new ShowUsecase(AppDataSource);
+            const remainingPlaces = await showUseCase.getRemainingPlaces(showId);
+            res.status(200).send({ remainingPlaces });
+        } catch (error) {
+            res.status(500).send({ error: "Internal error" });
+        }
+    });
 }
