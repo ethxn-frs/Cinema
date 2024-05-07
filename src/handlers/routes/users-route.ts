@@ -1,12 +1,18 @@
-import express, { Request, Response } from "express";
-import { LoginUserValidation, listUserValidation, updateUserRequest, userIdValidator, userValidation } from "../validators/user-validator";
-import { AppDataSource } from "../../database/database";
-import { generateValidationErrorMessage } from "../validators/generate-validation-message";
-import { UserUseCase } from "../../domain/user-usecase";
-import { createTicketUser } from "../validators/ticket-validator";
+import express, {Request, Response} from "express";
+import {
+    listUserValidation,
+    LoginUserValidation,
+    updateUserRequest,
+    userIdValidator,
+    userValidation
+} from "../validators/user-validator";
+import {AppDataSource} from "../../database/database";
+import {generateValidationErrorMessage} from "../validators/generate-validation-message";
+import {UserUseCase} from "../../domain/user-usecase";
+import {createTicketUser} from "../validators/ticket-validator";
+import {User} from "../../database/entities/user";
 import jwt = require("jsonwebtoken");
 import bcrypt = require("bcrypt");
-import {User} from "../../database/entities/user";
 
 export const userRoutes = (app: express.Express) => {
 
@@ -26,19 +32,18 @@ export const userRoutes = (app: express.Express) => {
 
         try {
             const userUseCase = new UserUseCase(AppDataSource)
-            const listUser = await userUseCase.listUser({ ...listUsersRequest, page, limit })
+            const listUser = await userUseCase.listUser({...listUsersRequest, page, limit})
             res.status(200).send(listUser)
-        }
-        catch (error) {
+        } catch (error) {
             console.log(error)
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 
     app.get("/users/:id", async (req: Request, res: Response) => {
         const validation = userIdValidator.validate(req.params)
 
-        if (validation.error){
+        if (validation.error) {
             res.status(400).send(generateValidationErrorMessage(validation.error.details));
         }
         const userId = validation.value.id;
@@ -47,7 +52,7 @@ export const userRoutes = (app: express.Express) => {
             const user = await userUseCase.getUserById(userId);
             res.status(200).send(user)
         } catch (error) {
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 
@@ -69,43 +74,43 @@ export const userRoutes = (app: express.Express) => {
             return res.status(201).send(result);
         } catch (error) {
             console.log(error)
-            res.status(500).send({ "error": "internal error retry later" })
+            res.status(500).send({"error": "internal error retry later"})
             return
         }
     })
 
     app.post('/auth/login', async (req: Request, res: Response) => {
         try {
-            const { error, value } = LoginUserValidation.validate(req.body);
+            const {error, value} = LoginUserValidation.validate(req.body);
 
             if (error) {
                 return res.status(400).send(generateValidationErrorMessage(error.details));
             }
 
             const userRepository = AppDataSource.getRepository(User);
-            const user = await userRepository.findOneBy({ login: value.login });
+            const user = await userRepository.findOneBy({login: value.login});
 
             if (!user) {
-                return res.status(401).send({ error: 'Utilisateur non trouvé' });
+                return res.status(401).send({error: 'Utilisateur non trouvé'});
             }
 
             const isValidPassword = await bcrypt.compare(value.password, user.password);
 
             if (!isValidPassword) {
-                return res.status(401).send({ error: 'Mot de passe incorrect' });
+                return res.status(401).send({error: 'Mot de passe incorrect'});
             }
 
             // Assurer que la clé secrète JWT est définie
             const jwtSecret = process.env.JWT_SECRET;
             if (!jwtSecret) {
                 console.error('JWT_SECRET is not defined.');
-                return res.status(500).send({ error: 'Internal server error. Please contact the administrator.' });
+                return res.status(500).send({error: 'Internal server error. Please contact the administrator.'});
             }
 
             const token = jwt.sign(
-                { userId: user.id, login: user.login },
+                {userId: user.id, login: user.login},
                 jwtSecret,
-                { expiresIn: '1h' }
+                {expiresIn: '1h'}
             );
 
             return res.status(200).send({
@@ -116,12 +121,12 @@ export const userRoutes = (app: express.Express) => {
 
         } catch (error) {
             console.error(error);
-            return res.status(500).send({ "error": "Internal error, please retry later" });
+            return res.status(500).send({"error": "Internal error, please retry later"});
         }
     });
 
     app.post('/auth/logout', (req, res) => {
-        res.status(200).send({ message: 'Déconnexion réussie. Veuillez supprimer votre jeton.' });
+        res.status(200).send({message: 'Déconnexion réussie. Veuillez supprimer votre jeton.'});
     })
 
     app.get('/users/:id/transactions', async (req, res) => {
@@ -137,7 +142,7 @@ export const userRoutes = (app: express.Express) => {
             const userTransactions = await userUseCase.getTransactionsFromUserId(userId);
             res.status(200).send(userTransactions);
         } catch (error) {
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     });
 
@@ -169,7 +174,7 @@ export const userRoutes = (app: express.Express) => {
 
     // pour acheter un ticket
     app.put('/users/:id/tickets', async (req, res) => {
-        
+
         const userIdValid = userIdValidator.validate(req.params)
 
         if (userIdValid.error) {

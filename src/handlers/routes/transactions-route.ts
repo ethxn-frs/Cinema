@@ -1,9 +1,14 @@
 import express, {NextFunction, Request, Response} from "express";
-import { listTransactionValidation, transactionIdValidation, transactionValidation } from "../validators/transaction-validator";
-import { TransactionUseCase } from "../../domain/transaction-usecase";
-import { AppDataSource } from "../../database/database";
-import { generateValidationErrorMessage } from "../validators/generate-validation-message";
+import {
+    listTransactionValidation,
+    transactionIdValidation,
+    transactionValidation
+} from "../validators/transaction-validator";
+import {TransactionUseCase} from "../../domain/transaction-usecase";
+import {AppDataSource} from "../../database/database";
+import {generateValidationErrorMessage} from "../validators/generate-validation-message";
 import {VerifyErrors} from "jsonwebtoken";
+
 const jwt = require('jsonwebtoken');
 
 export const transactionRoutes = (app: express.Express) => {
@@ -23,7 +28,7 @@ export const transactionRoutes = (app: express.Express) => {
                 next();
             });
         } else {
-           return res.sendStatus(401); // Unauthorized access
+            return res.sendStatus(401); // Unauthorized access
         }
     };
 
@@ -37,9 +42,9 @@ export const transactionRoutes = (app: express.Express) => {
         }
         const listTransactionsRequest = validation.value
 
-        if (listTransactionsRequest.userId){
+        if (listTransactionsRequest.userId) {
             // @ts-ignore
-            if (listTransactionsRequest.userId != req.user.userId){
+            if (listTransactionsRequest.userId != req.user.userId) {
                 return res.status(401).send("UNAUTHORIZED")
 
             }
@@ -53,10 +58,10 @@ export const transactionRoutes = (app: express.Express) => {
 
         try {
             const transactionUseCase = new TransactionUseCase(AppDataSource)
-            const listTransaction = await transactionUseCase.listTransaction({ ...listTransactionsRequest, page, limit })
+            const listTransaction = await transactionUseCase.listTransaction({...listTransactionsRequest, page, limit})
             res.status(200).send(listTransaction)
         } catch (error) {
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 
@@ -78,7 +83,7 @@ export const transactionRoutes = (app: express.Express) => {
             res.status(200).send(result);
         } catch (error) {
             console.log(error)
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 
@@ -98,7 +103,7 @@ export const transactionRoutes = (app: express.Express) => {
             res.status(200).send(result);
         } catch (error) {
             console.log(error)
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 
@@ -119,7 +124,7 @@ export const transactionRoutes = (app: express.Express) => {
             return res.status(201).send(result);
         } catch (error) {
             console.log(error)
-            res.status(500).send({ "error": "internal error retry later" })
+            res.status(500).send({"error": "internal error retry later"})
             return
         }
     })

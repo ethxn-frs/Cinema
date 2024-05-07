@@ -1,9 +1,14 @@
-import express, { Request, Response } from "express";
-import { AppDataSource } from "../../database/database";
-import { Ticket } from "../../database/entities/ticket";
-import { TicketUseCase } from "../../domain/ticket-usecase";
-import { generateValidationErrorMessage } from "../validators/generate-validation-message";
-import { listTicketValidation, ticketIdValidation, ticketValidation, updateTicketValidation } from "../validators/ticket-validator";
+import express, {Request, Response} from "express";
+import {AppDataSource} from "../../database/database";
+import {Ticket} from "../../database/entities/ticket";
+import {TicketUseCase} from "../../domain/ticket-usecase";
+import {generateValidationErrorMessage} from "../validators/generate-validation-message";
+import {
+    listTicketValidation,
+    ticketIdValidation,
+    ticketValidation,
+    updateTicketValidation
+} from "../validators/ticket-validator";
 
 export const ticketRoutes = (app: express.Express) => {
 
@@ -24,12 +29,11 @@ export const ticketRoutes = (app: express.Express) => {
 
         try {
             const ticketUseCase = new TicketUseCase(AppDataSource)
-            const listTicket = await ticketUseCase.listTicket({ ...listTicketsRequest, page, limit })
+            const listTicket = await ticketUseCase.listTicket({...listTicketsRequest, page, limit})
             res.status(200).send(listTicket)
-        }
-        catch (error) {
+        } catch (error) {
             console.log(error)
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 
@@ -52,7 +56,7 @@ export const ticketRoutes = (app: express.Express) => {
             )
             res.status(201).send(ticket)
         } catch (error) {
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
 
 
@@ -70,9 +74,9 @@ export const ticketRoutes = (app: express.Express) => {
             const ticketId = validationResult.value
 
             const ticketRepository = AppDataSource.getRepository(Ticket)
-            const ticket = await ticketRepository.findOneBy({ id: ticketId.id })
+            const ticket = await ticketRepository.findOneBy({id: ticketId.id})
             if (ticket === null) {
-                res.status(404).send({ "error": `ticket ${ticketId.id} not found` })
+                res.status(404).send({"error": `ticket ${ticketId.id} not found`})
                 return
             }
 
@@ -80,7 +84,7 @@ export const ticketRoutes = (app: express.Express) => {
             res.status(200).send(ticketDeleted)
         } catch (error) {
             console.log(error)
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 
@@ -99,7 +103,7 @@ export const ticketRoutes = (app: express.Express) => {
             const ticketCreated = await ticketUseCase.createTicket(ticketRequest)
             res.status(201).send(ticketCreated)
         } catch (error) {
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 
@@ -130,11 +134,11 @@ export const ticketRoutes = (app: express.Express) => {
             if (updatedTicket) {
                 res.status(200).send(updatedTicket);
             } else {
-                res.status(404).send({ error: "Ticket not found or update failed." });
+                res.status(404).send({error: "Ticket not found or update failed."});
             }
         } catch (error) {
             console.error("Update Ticket Error:", error);
-            res.status(500).send({ error: "Internal error" });
+            res.status(500).send({error: "Internal error"});
         }
     });
 

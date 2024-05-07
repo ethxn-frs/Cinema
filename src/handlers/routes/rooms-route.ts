@@ -4,7 +4,7 @@ import { Room } from "../../database/entities/room";
 import { RoomUseCase } from "../../domain/room-usecase";
 import { generateValidationErrorMessage } from "../validators/generate-validation-message";
 import { listRoomValidation, roomIdValidation, roomValidation } from "../validators/room-validator";
-import { ShowUsecase } from "../../domain/show-usecase";
+import { authenticateJWT, isAdmin } from '../../config/auth-middleware';
 
 export const roomRoutes = (app: express.Express) => {
 
@@ -36,7 +36,6 @@ export const roomRoutes = (app: express.Express) => {
         }
     })
 
-
     //get a room by id
     app.get("/rooms/:id", async (req: Request, res: Response) => {
         const validationResult = roomIdValidation.validate(req.params)
@@ -57,49 +56,46 @@ export const roomRoutes = (app: express.Express) => {
     })
 
     // delete a room by id
-    app.delete("/rooms/:id", async (req: Request, res: Response) => {
+    app.delete("/rooms/:id", authenticateJWT, isAdmin, async (req: Request, res: Response) => {
         try {
-            const validationResult = roomIdValidation.validate(req.params)
-
+            const validationResult = roomIdValidation.validate(req.params);
             if (validationResult.error) {
-                res.status(400).send(generateValidationErrorMessage(validationResult.error.details))
-                return
+                res.status(400).send(generateValidationErrorMessage(validationResult.error.details));
+                return;
             }
-            const roomId = validationResult.value
 
-            const roomRepository = AppDataSource.getRepository(Room)
-            const room = await roomRepository.findOneBy({ id: roomId.id })
+            const roomId = validationResult.value;
+            const roomRepository = AppDataSource.getRepository(Room);
+            const room = await roomRepository.findOneBy({ id: roomId.id });
             if (room === null) {
-                res.status(404).send({ "error": `room ${roomId.id} not found` })
-                return
+                res.status(404).send({ error: `room ${roomId.id} not found` });
+                return;
             }
 
-            const roomDeleted = await roomRepository.remove(room)
-            res.status(200).send(roomDeleted)
+            const roomDeleted = await roomRepository.remove(room);
+            res.status(200).send(roomDeleted);
         } catch (error) {
-            console.log(error)
-            res.status(500).send({ error: "Internal error" })
+            console.log(error);
+            res.status(500).send({ error: "Internal error" });
         }
-    })
+    });
 
-    app.post("/rooms", async (req: Request, res: Response) => {
-        const validation = roomValidation.validate(req.body)
-
+    app.post("/rooms", authenticateJWT, isAdmin, async (req: Request, res: Response) => {
+        const validation = roomValidation.validate(req.body);
         if (validation.error) {
-            res.status(400).send(generateValidationErrorMessage(validation.error.details))
-            return
+            res.status(400).send(generateValidationErrorMessage(validation.error.details));
+            return;
         }
 
-        const roomRequest = validation.value
-        const roomUsecase = new RoomUseCase(AppDataSource);
+        const roomRequest = validation.value;
+        const roomUseCase = new RoomUseCase(AppDataSource);
         try {
-            const roomCreated = await roomUsecase.createRoom(roomRequest);
-            res.status(201).send(roomCreated)
-        } catch (error) {
-            res.status(500).send({ error: "Internal error" })
+            const roomCreated = await roomUseCase.createRoom(roomRequest);
+            res.status(201).send(roomCreated);
+        } catch (error: any) {
+            res.status(500).send("Error: " + error.message);
         }
-
-    })
+    });
 
     app.get("/rooms/:id/shows", async (req: Request, res: Response) => {
         const validation = roomIdValidation.validate(req.params)

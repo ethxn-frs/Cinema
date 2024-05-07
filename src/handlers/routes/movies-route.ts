@@ -1,9 +1,9 @@
-import express, { Request, Response } from "express";
-import { AppDataSource } from "../../database/database";
-import { Movie } from "../../database/entities/movie";
-import { MovieUseCase } from "../../domain/movie-usecase";
-import { generateValidationErrorMessage } from "../validators/generate-validation-message";
-import { listMovieValidation, movieIdValidation, movieValidation } from "../validators/movie-validator";
+import express, {Request, Response} from "express";
+import {AppDataSource} from "../../database/database";
+import {Movie} from "../../database/entities/movie";
+import {MovieUseCase} from "../../domain/movie-usecase";
+import {generateValidationErrorMessage} from "../validators/generate-validation-message";
+import {listMovieValidation, movieIdValidation, movieValidation} from "../validators/movie-validator";
 
 export const movieRoutes = (app: express.Express) => {
 
@@ -24,11 +24,10 @@ export const movieRoutes = (app: express.Express) => {
 
         try {
             const movieUseCase = new MovieUseCase(AppDataSource);
-            const listMovies = await movieUseCase.listMovie({ ...listMovieRequest, page, limit, ascending, orderBy });
+            const listMovies = await movieUseCase.listMovie({...listMovieRequest, page, limit, ascending, orderBy});
             res.status(200).send(listMovies);
-        }
-        catch (error) {
-            res.status(500).send({ error: "Internal error" });
+        } catch (error) {
+            res.status(500).send({error: "Internal error"});
         }
     });
 
@@ -47,13 +46,12 @@ export const movieRoutes = (app: express.Express) => {
             const movie = await movieUseCase.getMovieById(movieId);
 
             if (movie === null) {
-                res.status(404).send({ "error": `error movie ${movieId} not found` })
+                res.status(404).send({"error": `error movie ${movieId} not found`})
                 return
             }
             res.status(200).send(movie)
-        }
-        catch (error) {
-            res.status(500).send({ "error": "Internal error" })
+        } catch (error) {
+            res.status(500).send({"error": "Internal error"})
         }
     })
 
@@ -69,16 +67,16 @@ export const movieRoutes = (app: express.Express) => {
             const movieId = validationResult.value
 
             const movieRepository = AppDataSource.getRepository(Movie)
-            const movie = await movieRepository.findOneBy({ id: movieId.id })
+            const movie = await movieRepository.findOneBy({id: movieId.id})
             if (movie === null) {
-                res.status(404).send({ "error": `movie ${movieId.id} not found` })
+                res.status(404).send({"error": `movie ${movieId.id} not found`})
                 return
             }
 
             const movieDeleted = await movieRepository.remove(movie)
             res.status(200).send(movieDeleted)
         } catch (error) {
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 
@@ -98,7 +96,7 @@ export const movieRoutes = (app: express.Express) => {
             )
             res.status(201).send(movieCreated)
         } catch (error) {
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 
@@ -117,7 +115,7 @@ export const movieRoutes = (app: express.Express) => {
             const movieShows = await movieUseCase.getMovieShows(movieIdRequest)
             res.status(201).send(movieShows)
         } catch (error) {
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 

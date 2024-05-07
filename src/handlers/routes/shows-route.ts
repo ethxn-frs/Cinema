@@ -1,13 +1,13 @@
-import express, { Request, Response } from "express";
-import { ShowUsecase } from "../../domain/show-usecase";
-import { AppDataSource } from "../../database/database";
+import express, {Request, Response} from "express";
+import {ShowUsecase} from "../../domain/show-usecase";
+import {AppDataSource} from "../../database/database";
 import {
-    showValidation,
-    showIdValidation,
     listShowsValidation,
+    showIdValidation,
+    showValidation,
     updateShowValidation
 } from "../validators/show-validator";
-import { generateValidationErrorMessage } from "../validators/generate-validation-message";
+import {generateValidationErrorMessage} from "../validators/generate-validation-message";
 import {ticketIdValidation} from "../validators/ticket-validator";
 
 export const showRoutes = (app: express.Express) => {
@@ -32,11 +32,11 @@ export const showRoutes = (app: express.Express) => {
 
         try {
             const showUseCase = new ShowUsecase(AppDataSource);
-            const listShows = await showUseCase.listShow({ ...listShowRequest, page, limit, ascending, orderBy })
+            const listShows = await showUseCase.listShow({...listShowRequest, page, limit, ascending, orderBy})
             res.status(200).send(listShows)
         } catch (error) {
             console.log(error)
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 
@@ -55,13 +55,13 @@ export const showRoutes = (app: express.Express) => {
             const show = await showUsecase.getShowById(showId);
 
             if (show === null) {
-                res.status(404).send({ "error": `Show ${showId} not found` });
+                res.status(404).send({"error": `Show ${showId} not found`});
                 return;
             }
             res.status(200).send(show);
         } catch (error) {
             console.log(error);
-            res.status(500).send({ "error": "Internal error" });
+            res.status(500).send({"error": "Internal error"});
         }
     });
 
@@ -81,7 +81,7 @@ export const showRoutes = (app: express.Express) => {
             res.status(200).send(result);
         } catch (error) {
             console.log(error)
-            res.status(500).send({ error: "Internal error" })
+            res.status(500).send({error: "Internal error"})
         }
     })
 
@@ -100,14 +100,14 @@ export const showRoutes = (app: express.Express) => {
             const result = await showUseCase.createShow(showRequest);
 
             if (result instanceof Error) {
-                res.status(400).send({ "error": result.message });
+                res.status(400).send({"error": result.message});
                 return;
             }
 
             res.status(201).send(result);
         } catch (error) {
             console.error(error);
-            res.status(500).send({ error: "Internal error" });
+            res.status(500).send({error: "Internal error"});
         }
     });
 
@@ -119,23 +119,23 @@ export const showRoutes = (app: express.Express) => {
             return;
         }
 
-        const validationUpdateShow =  updateShowValidation.validate(req.body);
+        const validationUpdateShow = updateShowValidation.validate(req.body);
 
         const showId = validationResult.value.id;
         const updateShow = validationUpdateShow.value
         const showUsecase = new ShowUsecase(AppDataSource);
 
         try {
-            const result =  await showUsecase.updateShow(showId, updateShow )
+            const result = await showUsecase.updateShow(showId, updateShow)
 
             if (result) {
                 res.status(200).send(result);
             } else {
-                res.status(404).send({ error: "Show not found or update failed." });
+                res.status(404).send({error: "Show not found or update failed."});
             }
         } catch (error) {
             console.error("Update Show Error:", error);
-            res.status(500).send({ error: "Internal error" });
+            res.status(500).send({error: "Internal error"});
         }
     })
 
@@ -154,15 +154,15 @@ export const showRoutes = (app: express.Express) => {
         const showUsecase = new ShowUsecase(AppDataSource);
 
         try {
-            const result =  await showUsecase.bookShow(showId, ticketId )
+            const result = await showUsecase.bookShow(showId, ticketId)
 
             if (result) {
                 res.status(200).send(result);
             } else {
-                res.status(404).send({ error: "Show not found or book failed." });
+                res.status(404).send({error: "Show not found or book failed."});
             }
         } catch (error) {
-            res.status(500).send({ error: "Internal error" });
+            res.status(500).send({error: "Internal error"});
         }
     })
 
@@ -171,9 +171,9 @@ export const showRoutes = (app: express.Express) => {
             const showId = parseInt(req.params.id, 10);
             const showUseCase = new ShowUsecase(AppDataSource);
             const remainingPlaces = await showUseCase.getRemainingPlaces(showId);
-            res.status(200).send({ remainingPlaces });
+            res.status(200).send({remainingPlaces});
         } catch (error) {
-            res.status(500).send({ error: "Internal error" });
+            res.status(500).send({error: "Internal error"});
         }
     });
 }
