@@ -1,6 +1,5 @@
 import Joi from "joi";
-import { Image } from "../../database/entities/image"
-import { Show } from "../../database/entities/show"
+import {Image} from "../../database/entities/image";
 
 export const movieValidation = Joi.object<MovieRequest>({
     name: Joi.string()
@@ -11,7 +10,7 @@ export const movieValidation = Joi.object<MovieRequest>({
         .required(),
     duration: Joi.number().min(1).required(),
     imageId: Joi.string().min(1).optional(),
-}).options({ abortEarly: false })
+}).options({abortEarly: false})
 
 export interface MovieRequest {
     name: string
@@ -45,13 +44,14 @@ export const updateMovieValidation = Joi.object<UpdateMovieRequest>({
     description: Joi.string()
         .min(5)
         .optional(),
+    duration: Joi.number().min(1).optional(),
 })
 
 export interface UpdateMovieRequest {
     id: number,
     name?: string,
     description?: string,
-
+    duration?: number,
 }
 
 export const movieIdValidation = Joi.object<MovieIdRequest>({

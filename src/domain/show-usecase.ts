@@ -111,11 +111,44 @@ export class ShowUsecase {
 
     async updateShow(id: number, updatedShow: UpdateShowRequest): Promise<Show | null> {
         const repo = this.db.getRepository(Show);
-        const showFound = await repo.findOneBy({id});
+        const roomRepository = this.db.getRepository(Room);
+        const showFound = await this.getShowById(id);
+
         if (showFound === null) return null;
 
-        if (updatedShow.startAt) showFound.startAt = updatedShow.startAt;
-        if (updatedShow.endAt) showFound.endAt = updatedShow.endAt;
+        if (updatedShow.startAt != undefined && updatedShow.startAt != showFound.startAt) {
+            const endAt = new Date(updatedShow.startAt);
+            endAt.setMinutes(endAt.getMinutes() + showFound.movie.duration + 30);
+
+            const conflict = await this.hasScheduleConflict(showFound.room.id, updatedShow.startAt, endAt, showFound.id)
+
+            if (conflict) {
+                throw new Error("Error while updating : A show has conflict with new one");
+            }
+
+            showFound.startAt = updatedShow.startAt;
+            showFound.endAt = endAt;
+        }
+
+        if (updatedShow.roomId != undefined && updatedShow.roomId != showFound.room.id) {
+            const room = await roomRepository.findOneBy({id: updatedShow.roomId});
+
+            if (!room) {
+                throw new Error("Room " + updatedShow.roomId + "not found");
+            }
+
+            const conflic = await this.hasScheduleConflict(room.id, showFound.startAt, showFound.endAt)
+
+            if (conflic) {
+                throw new Error("Room conflict with the new show")
+            }
+
+            showFound.room = room;
+        }
+
+        if (updatedShow.state != undefined && updatedShow.state !== showFound.state) {
+            showFound.state = updatedShow.state;
+        }
 
         return await repo.save(showFound);
     }
@@ -183,7 +216,7 @@ export class ShowUsecase {
         let cpt = 0;
 
         potShows.forEach(show => {
-            if ((show.startAt <= startAt && show.endAt >= endAt) || (show.startAt >= startAt && show.endAt <= endAt) || (show.startAt <= endAt && show.endAt >= endAt)) {
+            if (show.id != showIdToExclude && ((show.startAt <= startAt && show.endAt >= endAt) || (show.startAt >= startAt && show.endAt <= endAt) || (show.startAt <= endAt && show.endAt >= endAt))) {
                 cpt++;
             }
         })

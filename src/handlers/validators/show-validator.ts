@@ -1,12 +1,12 @@
 import Joi from "joi";
-import { ShowState } from "../../enumerators/ShowState";
+import {ShowState} from "../../enumerators/ShowState";
 
 export const showValidation = Joi.object<ShowRequest>({
     roomId: Joi.number().min(1).required(),
     movieId: Joi.number().min(1).required(),
     startAt: Joi.date().required(),
     state: Joi.string().valid(ShowState.ACTIVE, ShowState.CANCELED),
-}).options({ abortEarly: false })
+}).options({abortEarly: false})
 
 export interface ShowRequest {
     roomId: number,
@@ -41,16 +41,16 @@ export interface ListShowRequest {
 
 export const updateShowValidation = Joi.object<UpdateShowRequest>({
     id: Joi.number().required(),
-    name: Joi.string().min(3).optional(),
     startAt: Joi.date().optional(),
-    endAt: Joi.date().optional()
+    state: Joi.string().valid(ShowState.ACTIVE, ShowState.CANCELED).optional(),
+    roomId: Joi.number().min(1).optional(),
 })
 
 export interface UpdateShowRequest {
     id: number,
-    name?: string,
     startAt?: Date,
-    endAt?: Date,
+    state?: ShowState,
+    roomId?: number,
 }
 
 export const showIdValidation = Joi.object<ShowIdRequest>({

@@ -3,7 +3,12 @@ import {AppDataSource} from "../../database/database";
 import {Movie} from "../../database/entities/movie";
 import {MovieUseCase} from "../../domain/movie-usecase";
 import {generateValidationErrorMessage} from "../validators/generate-validation-message";
-import {listMovieValidation, movieIdValidation, movieValidation} from "../validators/movie-validator";
+import {
+    listMovieValidation,
+    movieIdValidation,
+    movieValidation,
+    updateMovieValidation
+} from "../validators/movie-validator";
 
 export const movieRoutes = (app: express.Express) => {
 
@@ -80,6 +85,7 @@ export const movieRoutes = (app: express.Express) => {
         }
     })
 
+    // create a movie
     app.post("/movies", async (req: Request, res: Response) => {
         const validation = movieValidation.validate(req.body)
 
@@ -100,6 +106,7 @@ export const movieRoutes = (app: express.Express) => {
         }
     })
 
+    // get shows of a movie
     app.get("/movies/:id/shows", async (req: Request, res: Response) => {
         const validation = movieIdValidation.validate(req.params);
 
@@ -119,4 +126,29 @@ export const movieRoutes = (app: express.Express) => {
         }
     })
 
+    app.put("/movies/:id", async (req: Request, res: Response) => {
+        const validation = movieIdValidation.validate(req.params)
+
+        if (validation.error) {
+            res.status(400).send(generateValidationErrorMessage(validation.error.details))
+            return
+        }
+
+        const updateMovieValidate = updateMovieValidation.validate(req.body);
+
+        if (updateMovieValidate.error) {
+            res.status(500).send(generateValidationErrorMessage(updateMovieValidate.error.details))
+            return
+        }
+
+        const movieData = req.body;
+
+        try {
+            const movieUseCase = new MovieUseCase(AppDataSource)
+            const updatedMovie = await movieUseCase.updateMovie(movieData);
+            res.status(201).send(updatedMovie)
+        } catch (error: any) {
+            res.status(500).send({error: "Internal error"})
+        }
+    })
 }

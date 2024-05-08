@@ -121,21 +121,24 @@ export const showRoutes = (app: express.Express) => {
 
         const validationUpdateShow = updateShowValidation.validate(req.body);
 
+        if (validationUpdateShow.error) {
+            res.status(400).send(generateValidationErrorMessage(validationUpdateShow.error.details));
+            return;
+        }
         const showId = validationResult.value.id;
-        const updateShow = validationUpdateShow.value
-        const showUsecase = new ShowUsecase(AppDataSource);
+        const updateShow = req.body
+        const showUseCase = new ShowUsecase(AppDataSource);
 
         try {
-            const result = await showUsecase.updateShow(showId, updateShow)
+            const result = await showUseCase.updateShow(showId, updateShow)
 
             if (result) {
                 res.status(200).send(result);
             } else {
                 res.status(404).send({error: "Show not found or update failed."});
             }
-        } catch (error) {
-            console.error("Update Show Error:", error);
-            res.status(500).send({error: "Internal error"});
+        } catch (error: any) {
+            res.status(500).send(error.message);
         }
     })
 
