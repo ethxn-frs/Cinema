@@ -1,7 +1,9 @@
-import { NextFunction, Request, Response } from "express";
-import jwt, { VerifyErrors } from "jsonwebtoken";
-import { AppDataSource } from "../database/database";
-import { User } from "../database/entities/user";
+import {NextFunction, Request, Response} from "express";
+import {VerifyErrors} from "jsonwebtoken";
+import {UserUseCase} from "../domain/user-usecase";
+import {AppDataSource} from "../database/database";
+
+const jwt = require('jsonwebtoken');
 
 const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
@@ -22,17 +24,19 @@ const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
     }
 };
 
-const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
-    // @ts-ignore
-    const userId = req.user.id;
-    const userRepository = AppDataSource.getRepository(User);
-    const user = await userRepository.findOneBy({ id: userId });
+const isAdmin = async (user: any) => {
+    try {
+        const userUseCase = new UserUseCase(AppDataSource);
+        const userDb = await userUseCase.getUserById(user.userId);
 
-    if (user && user.roles.split(';').map(role => role.trim()).includes("admin")) {
-        next();
-    } else {
-        res.status(403).send({ error: "Forbidden" });
+        if (!user) {
+            return false;
+        }
+        // @ts-ignore
+        const roles = userDb.roles.split(";");
+        return roles.includes("admin")
+    } catch (error) {
+        return false;
     }
-};
-
-export { authenticateJWT, isAdmin };
+}
+export {authenticateJWT, isAdmin};

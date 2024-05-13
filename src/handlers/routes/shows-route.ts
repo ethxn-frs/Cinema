@@ -4,16 +4,19 @@ import {AppDataSource} from "../../database/database";
 import {
     listShowsValidation,
     showIdValidation,
+    showReservationsValidation,
     showValidation,
     updateShowValidation
 } from "../validators/show-validator";
 import {generateValidationErrorMessage} from "../validators/generate-validation-message";
 import {ticketIdValidation} from "../validators/ticket-validator";
+import {TicketUseCase} from "../../domain/ticket-usecase";
+import {authenticateJWT, isAdmin} from "../../config/auth-middleware";
 
 export const showRoutes = (app: express.Express) => {
 
     // get all shows
-    app.get("/shows", async (req: Request, res: Response) => {
+    app.get("/shows", authenticateJWT, async (req: Request, res: Response) => {
         const validation = listShowsValidation.validate(req.query)
 
         if (validation.error) {
@@ -41,7 +44,7 @@ export const showRoutes = (app: express.Express) => {
     })
 
     //get a show by id
-    app.get("/shows/:id", async (req: Request, res: Response) => {
+    app.get("/shows/:id", authenticateJWT, async (req: Request, res: Response) => {
         try {
             const validationResult = showIdValidation.validate(req.params);
             if (validationResult.error) {
@@ -49,7 +52,6 @@ export const showRoutes = (app: express.Express) => {
                 return;
             }
 
-            console.log("encore la")
             const showId = validationResult.value.id;
             const showUsecase = new ShowUsecase(AppDataSource);
             const show = await showUsecase.getShowById(showId);
@@ -66,8 +68,14 @@ export const showRoutes = (app: express.Express) => {
     });
 
     // delete a show by id
-    app.delete("/shows/:id", async (req: Request, res: Response) => {
+    app.delete("/shows/:id", authenticateJWT, async (req: Request, res: Response) => {
         try {
+
+            // @ts-ignore
+            if (!isAdmin(req.user)) {
+                return res.status(401).send("UNAUTHORIZED")
+            }
+
             const validationResult = showIdValidation.validate(req.params)
 
             if (validationResult.error) {
@@ -85,7 +93,14 @@ export const showRoutes = (app: express.Express) => {
         }
     })
 
-    app.post("/shows", async (req: Request, res: Response) => {
+    // create a show
+    app.post("/shows", authenticateJWT, async (req: Request, res: Response) => {
+
+        // @ts-ignore
+        if (!isAdmin(req.user)) {
+            return res.status(401).send("UNAUTHORIZED")
+        }
+
         const validation = showValidation.validate(req.body);
 
         if (validation.error) {
@@ -111,7 +126,14 @@ export const showRoutes = (app: express.Express) => {
         }
     });
 
-    app.put("/shows/:id", async (req: Request, res: Response) => {
+    // edit a show
+    app.put("/shows/:id", authenticateJWT, async (req: Request, res: Response) => {
+
+        // @ts-ignore
+        if (!isAdmin(req.user)) {
+            return res.status(401).send("UNAUTHORIZED")
+        }
+
         const validationResult = showIdValidation.validate(req.params);
 
         if (validationResult.error) {
@@ -142,7 +164,8 @@ export const showRoutes = (app: express.Express) => {
         }
     })
 
-    app.put("/shows/:id/book", async (req: Request, res: Response) => {
+    // reserve a show
+    app.put("/shows/:id/book", authenticateJWT, async (req: Request, res: Response) => {
         const validationResult = showIdValidation.validate(req.params);
 
         if (validationResult.error) {
@@ -169,7 +192,8 @@ export const showRoutes = (app: express.Express) => {
         }
     })
 
-    app.get("/shows/:id/remaining-places", async (req, res) => {
+    // get remaining places for a show
+    app.get("/shows/:id/remaining-places", authenticateJWT, async (req, res) => {
         try {
             const showId = parseInt(req.params.id, 10);
             const showUseCase = new ShowUsecase(AppDataSource);
@@ -179,4 +203,26 @@ export const showRoutes = (app: express.Express) => {
             res.status(500).send({error: "Internal error"});
         }
     });
+
+    // get booked show
+    app.get("/shows/my/reservations", authenticateJWT, async (req: Request, res: Response) => {
+
+        const validationResult = showReservationsValidation.validate(req.query);
+
+        if (validationResult.error) {
+            res.status(400).send(generateValidationErrorMessage(validationResult.error.details));
+        }
+
+        const userId = validationResult.value.id;
+        const ticketUseCase = new TicketUseCase(AppDataSource);
+
+        try {
+            const result = await ticketUseCase.getUserShows(userId);
+            if (result) {
+                res.status(200).send(result);
+            }
+        } catch (error: any) {
+            res.status(500).send(error.message);
+        }
+    })
 }

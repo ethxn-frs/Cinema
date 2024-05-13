@@ -37,6 +37,8 @@ export class Show {
     @ManyToMany(() => Ticket, ticket => ticket.shows)
     tickets!: Ticket[];
 
+    visitCount: number = 0;
+
     constructor(id?: number, room?: Room, movie?: Movie, startAt?: Date, endAt?: Date, state?: ShowState, tickets?: Ticket[]) {
         if (id) this.id = id;
         if (room) this.room = room;

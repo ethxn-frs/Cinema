@@ -1,4 +1,4 @@
-import express, {NextFunction, Request, Response} from "express";
+import express, {Request, Response} from "express";
 import {
     listTransactionValidation,
     transactionIdValidation,
@@ -7,30 +7,9 @@ import {
 import {TransactionUseCase} from "../../domain/transaction-usecase";
 import {AppDataSource} from "../../database/database";
 import {generateValidationErrorMessage} from "../validators/generate-validation-message";
-import {VerifyErrors} from "jsonwebtoken";
-
-const jwt = require('jsonwebtoken');
+import {authenticateJWT} from "../../config/auth-middleware";
 
 export const transactionRoutes = (app: express.Express) => {
-
-    const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
-        const authHeader = req.headers.authorization;
-        if (authHeader) {
-            const token = authHeader.split(' ')[1];
-
-            jwt.verify(token, process.env.JWT_SECRET as string, (err: VerifyErrors | null, user: object | undefined) => {
-                if (err) {
-                    return res.sendStatus(403); // Forbidden access
-                }
-
-                // @ts-ignore
-                req.user = user; // Assign the decoded user to the request object
-                next();
-            });
-        } else {
-            return res.sendStatus(401); // Unauthorized access
-        }
-    };
 
     //get all transactions
     app.get("/transactions", authenticateJWT, async (req: Request, res: Response) => {
@@ -44,9 +23,8 @@ export const transactionRoutes = (app: express.Express) => {
 
         if (listTransactionsRequest.userId) {
             // @ts-ignore
-            if (listTransactionsRequest.userId != req.user.userId) {
+            if (listTransactionsRequest.userId != req.user.userId && !isAdmin(req.user)) {
                 return res.status(401).send("UNAUTHORIZED")
-
             }
         }
 
@@ -66,7 +44,7 @@ export const transactionRoutes = (app: express.Express) => {
     })
 
     //get by id
-    app.get("/transactions/:id", async (req: Request, res: Response) => {
+    app.get("/transactions/:id", authenticateJWT, async (req: Request, res: Response) => {
 
         try {
             const validation = transactionIdValidation.validate(req.params)
@@ -78,17 +56,21 @@ export const transactionRoutes = (app: express.Express) => {
 
             const transactionId = validation.value.id
             const transactionUseCase = new TransactionUseCase(AppDataSource);
-            const result = transactionUseCase.deleteTransaction(transactionId);
+            const result = await transactionUseCase.getTransactionById(transactionId);
+
+            // @ts-ignore
+            if (result?.user.id != req.user.id && !isAdmin(req.user)) {
+                return res.status(401).send("UNAUTHORIZED")
+            }
 
             res.status(200).send(result);
         } catch (error) {
-            console.log(error)
             res.status(500).send({error: "Internal error"})
         }
     })
 
     //delete by id
-    app.delete("/transactions/:id", async (req: Request, res: Response) => {
+    app.delete("/transactions/:id", authenticateJWT, async (req: Request, res: Response) => {
         try {
             const validationResult = transactionIdValidation.validate(req.params)
 
@@ -98,6 +80,14 @@ export const transactionRoutes = (app: express.Express) => {
             }
             const transactionId = validationResult.value.id
             const transactionUseCase = new TransactionUseCase(AppDataSource);
+
+            const transaction = await transactionUseCase.getTransactionById(transactionId);
+
+            // @ts-ignore
+            if (transaction?.user.id != req.user.id && !isAdmin(req.user)) {
+                return res.status(401).send("UNAUTHORIZED")
+            }
+
             const result = transactionUseCase.deleteTransaction(transactionId);
 
             res.status(200).send(result);
@@ -108,7 +98,12 @@ export const transactionRoutes = (app: express.Express) => {
     })
 
     //create transaction
-    app.post("/transactions", async (req: Request, res: Response) => {
+    app.post("/transactions", authenticateJWT, async (req: Request, res: Response) => {
+
+        // @ts-ignore
+        if (!isAdmin(req.user)) {
+            return res.status(401).send("UNAUTHORIZED")
+        }
 
         const validation = transactionValidation.validate(req.body)
 
@@ -116,17 +111,20 @@ export const transactionRoutes = (app: express.Express) => {
             res.status(400).send(generateValidationErrorMessage(validation.error.details))
             return
         }
+
         const transactionRequested = validation.value
         const transactionUseCase = new TransactionUseCase(AppDataSource);
 
-        try {
-            const result = await transactionUseCase.createTransaction(transactionRequested);
-            return res.status(201).send(result);
-        } catch (error) {
-            console.log(error)
-            res.status(500).send({"error": "internal error retry later"})
-            return
-        }
+        if (transactionUseCase)
+
+            try {
+                const result = await transactionUseCase.createTransaction(transactionRequested);
+                return res.status(201).send(result);
+            } catch (error) {
+                console.log(error)
+                res.status(500).send({"error": "internal error retry later"})
+                return
+            }
     })
 
 }

@@ -1,6 +1,6 @@
 import {DataSource} from "typeorm";
 import {Room} from "../database/entities/room";
-import {RoomRequest} from "../handlers/validators/room-validator";
+import {RoomRequest, UpdateRoomRequest} from "../handlers/validators/room-validator";
 
 export interface ListRoomFilter {
     page: number
@@ -51,7 +51,7 @@ export class RoomUseCase {
         });
 
         if (room) {
-            if (room.state === false) {
+            if (!room.state) {
                 return {
                     room: room,
                     message: "This room is currently under maintenance."
@@ -78,5 +78,35 @@ export class RoomUseCase {
                 shows: true,
             }
         });
+    }
+
+    async updateRoom(roomId: number, roomData: UpdateRoomRequest): Promise<Room | Error> {
+        const roomRepository = this.db.getRepository(Room);
+        const room = await roomRepository.findOneBy({id: roomId})
+
+        if (!room) {
+            throw new Error(`Room ${roomId} not found`);
+        }
+
+        if (roomData.name != undefined && roomData.name != room.name) {
+            room.name = roomData.name;
+        }
+
+        if (roomData.description != undefined && roomData.description != room.description) {
+            room.description = roomData.description;
+        }
+
+        if (roomData.type != undefined && roomData.type != room.type) {
+            room.type = roomData.type;
+        }
+
+        if (roomData.state != undefined && roomData.state != room.state) {
+            room.state = roomData.state;
+        }
+
+        if (roomData.handicapAvailable != undefined && roomData.handicapAvailable != room.handicapAvailable) {
+            room.handicapAvailable = roomData.handicapAvailable;
+        }
+        return await roomRepository.save(room);
     }
 }

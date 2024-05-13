@@ -1,5 +1,4 @@
 import Joi from "joi";
-import { TicketType } from "../../enumerators/TicketType";
 
 export interface UserRequest {
     login: string,
@@ -17,7 +16,7 @@ export const userValidation = Joi.object<UserRequest>({
     roles: Joi.string().min(1).optional(),
     transactionId: Joi.array().optional(),
     ticketId: Joi.array().optional()
-}).options({ abortEarly: false })
+}).options({abortEarly: false})
 
 
 export const listUserValidation = Joi.object<ListUserRequest>({
@@ -50,6 +49,7 @@ export const LoginUserValidation = Joi.object<LoginUser>({
 })
 
 export interface UpdateUserRequest {
+    id: number
     login?: string,
     password?: string,
     sold?: number,
@@ -60,8 +60,9 @@ export interface UpdateUserRequest {
 }
 
 export const updateUserRequest = Joi.object<UpdateUserRequest>({
+    id: Joi.number().required(),
     login: Joi.string().min(5).optional(),
-    password: Joi.string().min(8).optional(),
+    password: Joi.string().optional(),
     sold: Joi.number().optional(),
     soldTT: Joi.number().optional(),
     roles: Joi.string().optional(),

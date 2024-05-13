@@ -58,15 +58,6 @@ export class MovieUseCase {
         newMovie.name = movieData.name;
         newMovie.duration = movieData.duration;
 
-        if (movieData.imageId) {
-            const imageRepository = this.db.getRepository(Image);
-            const image = await imageRepository.findOneBy({id: movieData.imageId});
-            if (!image) {
-                return new Error(`Image ${movieData.imageId} not found`);
-            }
-            newMovie.image = image;
-        }
-
         return await movieRepository.save(newMovie);
     }
 

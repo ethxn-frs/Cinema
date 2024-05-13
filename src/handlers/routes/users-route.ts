@@ -100,7 +100,6 @@ export const userRoutes = (app: express.Express) => {
                 return res.status(401).send({error: 'Mot de passe incorrect'});
             }
 
-            // Assurer que la clé secrète JWT est définie
             const jwtSecret = process.env.JWT_SECRET;
             if (!jwtSecret) {
                 console.error('JWT_SECRET is not defined.');
@@ -134,7 +133,6 @@ export const userRoutes = (app: express.Express) => {
             const validation = userIdValidator.validate(req.params);
             if (validation.error) {
                 res.status(400).send(generateValidationErrorMessage(validation.error.details));
-                return;
             }
             const userId = validation.value.id
 
@@ -145,6 +143,34 @@ export const userRoutes = (app: express.Express) => {
             res.status(500).send({error: "Internal error"})
         }
     });
+
+    app.put('/users/:id', async (req: Request, res: Response) => {
+
+        const userIdValidation = userIdValidator.validate(req.params);
+
+        if (userIdValidation.error) {
+            res.status(400).send(generateValidationErrorMessage(userIdValidation.error.details));
+        }
+
+        const userUpdateValidator = updateUserRequest.validate(req.body);
+
+        if (userUpdateValidator.error) {
+            res.status(400).send(generateValidationErrorMessage(userUpdateValidator.error.details));
+        }
+
+        const userId = userIdValidation.value.id;
+        const data = req.body;
+        const userUseCase = new UserUseCase(AppDataSource);
+
+        try {
+            const result = userUseCase.updateUser(userId, data)
+            if (result) {
+                res.status(200).send(result);
+            }
+        } catch (error) {
+            res.status(500).send({"error": "Internal error"})
+        }
+    })
 
     // route pour mettre a jour le solde
     app.put('/users/:id/sold', async (req, res) => {

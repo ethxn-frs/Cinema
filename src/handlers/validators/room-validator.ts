@@ -2,10 +2,10 @@ import Joi from "joi";
 
 export const roomValidation = Joi.object<RoomRequest>({
     name: Joi.string()
-        .min(3)
+        .min(1)
         .required(),
     description: Joi.string()
-        .min(10)
+        .min(5)
         .required(),
     type: Joi.string()
         .min(1)
@@ -14,7 +14,7 @@ export const roomValidation = Joi.object<RoomRequest>({
     handicapAvailable: Joi.boolean().required(),
     capacity: Joi.number().min(15).max(30).required(),
 
-}).options({ abortEarly: false })
+}).options({abortEarly: false})
 
 export interface RoomRequest {
     name: string
@@ -43,17 +43,16 @@ export interface ListRoomRequest {
 export const updateRoomValidation = Joi.object<UpdateRoomRequest>({
     id: Joi.number().required(),
     name: Joi.string()
-        .min(3)
+        .min(1)
         .optional(),
     description: Joi.string()
-        .min(10)
+        .min(5)
         .optional(),
     type: Joi.string()
         .min(1)
         .optional(),
     state: Joi.boolean().optional(),
     handicapAvailable: Joi.boolean().optional(),
-    capacity: Joi.number().min(1).optional(),
 })
 
 export interface UpdateRoomRequest {
@@ -63,7 +62,6 @@ export interface UpdateRoomRequest {
     type?: string
     state?: boolean
     handicapAvailable?: boolean
-    capacity?: number
 }
 
 export const roomIdValidation = Joi.object<RoomIdRequest>({

@@ -18,6 +18,7 @@ export interface ListShowFilter {
     endAtMin?: Date;
     endAtMax?: Date;
     movieId?: number
+    roomId?: number
 }
 
 export class ShowUsecase {
@@ -29,6 +30,9 @@ export class ShowUsecase {
 
         query.leftJoinAndSelect('show.room', 'room');
         query.leftJoinAndSelect('show.movie', 'movie');
+        query.leftJoinAndSelect('movie.image', 'image');
+
+        query.andWhere('room.state = :roomState', {roomState: true});
 
         if (listShowFilter.startAtMin) {
             query.andWhere('show.startAt >= :startAtMin', {startAtMin: listShowFilter.startAtMin});
@@ -52,6 +56,10 @@ export class ShowUsecase {
 
         if (listShowFilter.movieId) {
             query.andWhere("show.movieId = :movieId", {movieId: listShowFilter.movieId});
+        }
+
+        if (listShowFilter.roomId) {
+            query.andWhere("show.roomId = :roomId", {roomId: listShowFilter.roomId});
         }
 
         query.skip((listShowFilter.page - 1) * listShowFilter.limit);

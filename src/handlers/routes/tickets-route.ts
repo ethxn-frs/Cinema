@@ -9,11 +9,12 @@ import {
     ticketValidation,
     updateTicketValidation
 } from "../validators/ticket-validator";
+import {authenticateJWT, isAdmin} from "../../config/auth-middleware";
 
 export const ticketRoutes = (app: express.Express) => {
 
     //get all tickets
-    app.get("/tickets", async (req: Request, res: Response) => {
+    app.get("/tickets", authenticateJWT, async (req: Request, res: Response) => {
         const validation = listTicketValidation.validate(req.query)
 
         if (validation.error) {
@@ -27,6 +28,13 @@ export const ticketRoutes = (app: express.Express) => {
 
         const page = listTicketsRequest.page ?? 1
 
+        if (listTicketsRequest.userId) {
+            // @ts-ignore
+            if (listTicketsRequest.userId != req.user.userId && !isAdmin(req.user)) {
+                return res.status(401).send("UNAUTHORIZED")
+            }
+        }
+
         try {
             const ticketUseCase = new TicketUseCase(AppDataSource)
             const listTicket = await ticketUseCase.listTicket({...listTicketsRequest, page, limit})
@@ -37,9 +45,8 @@ export const ticketRoutes = (app: express.Express) => {
         }
     })
 
-
     //get a ticket by id
-    app.get("/tickets/:id", async (req: Request, res: Response) => {
+    app.get("/tickets/:id", authenticateJWT, async (req: Request, res: Response) => {
 
         const validation = ticketIdValidation.validate(req.params)
 
@@ -63,8 +70,14 @@ export const ticketRoutes = (app: express.Express) => {
     })
 
     // delete a ticket by id
-    app.delete("/tickets/:id", async (req: Request, res: Response) => {
+    app.delete("/tickets/:id", authenticateJWT, async (req: Request, res: Response) => {
         try {
+
+            // @ts-ignore
+            if (!isAdmin(req.user)) {
+                return res.status(401).send("UNAUTHORIZED")
+            }
+
             const validationResult = ticketIdValidation.validate(req.params)
 
             if (validationResult.error) {
@@ -88,7 +101,7 @@ export const ticketRoutes = (app: express.Express) => {
         }
     })
 
-    app.post("/tickets", async (req: Request, res: Response) => {
+    app.post("/tickets", authenticateJWT, async (req: Request, res: Response) => {
         const validation = ticketValidation.validate(req.body)
 
         if (validation.error) {
@@ -107,7 +120,7 @@ export const ticketRoutes = (app: express.Express) => {
         }
     })
 
-    app.put("/tickets/:id", async (req: Request, res: Response) => {
+    app.put("/tickets/:id", authenticateJWT, async (req: Request, res: Response) => {
         const ticketIdValide = ticketIdValidation.validate(req.params)
 
         if (ticketIdValide.error) {
@@ -116,9 +129,7 @@ export const ticketRoutes = (app: express.Express) => {
         }
 
         const ticketId = ticketIdValide.value.id
-
         const ticketData = req.body;
-
         const validation = updateTicketValidation.validate(ticketData);
 
         if (validation.error) {

@@ -6,14 +6,20 @@ import {generateValidationErrorMessage} from "../validators/generate-validation-
 import {
     listMovieValidation,
     movieIdValidation,
+    MovieRequest,
     movieValidation,
     updateMovieValidation
 } from "../validators/movie-validator";
+import {ImageUseCase} from "../../domain/image-usecase";
+import {authenticateJWT, isAdmin} from "../../config/auth-middleware";
+
+const imageUseCase = new ImageUseCase(AppDataSource);
+const uploadMiddleware = imageUseCase.getMulterMiddleware();
 
 export const movieRoutes = (app: express.Express) => {
 
     //get all movies
-    app.get("/movies", async (req: Request, res: Response) => {
+    app.get("/movies", authenticateJWT, async (req: Request, res: Response) => {
         const validation = listMovieValidation.validate(req.query)
 
         if (validation.error) {
@@ -37,7 +43,7 @@ export const movieRoutes = (app: express.Express) => {
     });
 
     //get a movie by id
-    app.get("/movies/:id", async (req: Request, res: Response) => {
+    app.get("/movies/:id", authenticateJWT, async (req: Request, res: Response) => {
         try {
             const validationResult = movieIdValidation.validate(req.params)
 
@@ -61,8 +67,13 @@ export const movieRoutes = (app: express.Express) => {
     })
 
     // delete a movie by id
-    app.delete("/movies/:id", async (req: Request, res: Response) => {
+    app.delete("/movies/:id", authenticateJWT, async (req: Request, res: Response) => {
         try {
+            // @ts-ignore
+            if (!isAdmin(req.user)) {
+                return res.status(401).send("UNAUTHORIZED")
+            }
+
             const validationResult = movieIdValidation.validate(req.params)
 
             if (validationResult.error) {
@@ -86,28 +97,50 @@ export const movieRoutes = (app: express.Express) => {
     })
 
     // create a movie
-    app.post("/movies", async (req: Request, res: Response) => {
-        const validation = movieValidation.validate(req.body)
+    app.post("/movies", authenticateJWT, uploadMiddleware, async (req: Request, res: Response) => {
+        const validation = movieValidation.validate(req.body);
+
+        // @ts-ignore
+        if (!isAdmin(req.user)) {
+            return res.status(401).send("UNAUTHORIZED")
+        }
 
         if (validation.error) {
-            res.status(400).send(generateValidationErrorMessage(validation.error.details))
-            return
+            res.status(400).send(generateValidationErrorMessage(validation.error.details));
+            return;
         }
 
-        const movieRequest = validation.value
-        const movieUseCase = new MovieUseCase(AppDataSource)
+        const movieRequest: MovieRequest = validation.value;
+        const movieUseCase = new MovieUseCase(AppDataSource);
+
         try {
-            const movieCreated = await movieUseCase.createMovie(
-                movieRequest
-            )
-            res.status(201).send(movieCreated)
+            const movieCreated = await movieUseCase.createMovie(movieRequest);
+
+            if (movieCreated instanceof Error) {
+                res.status(500).send({error: movieCreated.message});
+                return;
+            }
+
+            if (movieCreated != null) {
+                if (req.file) {
+                    const uploadResult = await imageUseCase.uploadImage(req.file.path, req.file.originalname);
+
+                    if (uploadResult instanceof Error) {
+                        res.status(500).send({error: "Error uploading image"});
+                        return;
+                    }
+
+                    await imageUseCase.createImage(uploadResult, movieCreated)
+                }
+            }
+            res.status(201).send(movieCreated);
         } catch (error) {
-            res.status(500).send({error: "Internal error"})
+            res.status(500).send({error: "Internal error"});
         }
-    })
+    });
 
     // get shows of a movie
-    app.get("/movies/:id/shows", async (req: Request, res: Response) => {
+    app.get("/movies/:id/shows", authenticateJWT, async (req: Request, res: Response) => {
         const validation = movieIdValidation.validate(req.params);
 
         if (validation.error) {
@@ -126,7 +159,14 @@ export const movieRoutes = (app: express.Express) => {
         }
     })
 
-    app.put("/movies/:id", async (req: Request, res: Response) => {
+    // edit a movie
+    app.put("/movies/:id", authenticateJWT, async (req: Request, res: Response) => {
+
+        // @ts-ignore
+        if (!isAdmin(req.user)) {
+            return res.status(401).send("UNAUTHORIZED")
+        }
+
         const validation = movieIdValidation.validate(req.params)
 
         if (validation.error) {

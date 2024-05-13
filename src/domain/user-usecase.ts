@@ -11,6 +11,7 @@ import {ListTicketFilter, TicketUseCase} from "./ticket-usecase";
 import {ticketValidation} from "../handlers/validators/ticket-validator";
 import {TransactionType} from "../enumerators/TransactionType";
 import {Repository} from "typeorm/repository/Repository";
+import {transactionValidation} from "../handlers/validators/transaction-validator";
 
 
 export interface ListUserCase {
@@ -20,18 +21,20 @@ export interface ListUserCase {
 
 export class UserUseCase {
 
-    constructor(private readonly db: DataSource) { }
+    constructor(private readonly db: DataSource) {
+    }
 
-    async listUser(lisuser: ListUserCase): Promise<{ user: User[], total: number }> {
-
-        //const query = this.db.createQueryBuilder(User, 'user');
-        // Create a query builder instance for User
+    async listUser(listuser: ListUserCase): Promise<{ user: User[], total: number }> {
         const query = this.db.getRepository(User).createQueryBuilder('user');
 
-        query.skip((lisuser.page - 1) * lisuser.limit);
-        query.take(lisuser.limit);
+        query.skip((listuser.page - 1) * listuser.limit);
+        query.take(listuser.limit);
 
         const [user, total] = await query.getManyAndCount();
+        for (let u of user) {
+            u.password = "{noop}"
+        }
+
         return {
             user,
             total
@@ -50,7 +53,7 @@ export class UserUseCase {
         newUser.login = userData.login;
         newUser.password = await hash(userData.password, 10);
 
-        if (userData.roles){
+        if (userData.roles) {
             newUser.roles = userData.roles;
         } else {
             newUser.roles = ' user';
@@ -80,9 +83,14 @@ export class UserUseCase {
 
     async getUserById(userId: number): Promise<User | null> {
         const userRepository = this.db.getRepository(User);
-        return await userRepository.findOne({
-            where: { id: userId }
+        const result = await userRepository.findOne({
+            where: {id: userId}
         });
+        if (!result) {
+            throw new Error(`User with id ${userId} not found`);
+        }
+        result.password = "{noop}"
+        return result;
     }
 
     async getTransactionsFromUserId(userId: number): Promise<Transaction[] | null> {
@@ -116,7 +124,8 @@ export class UserUseCase {
 
         };
 
-        const ticketUseCase  = new TicketUseCase(AppDataSource);;
+        const ticketUseCase = new TicketUseCase(AppDataSource);
+        ;
         const result = await ticketUseCase.listTicket(listTicketFilter);
 
         return result.tickets;
@@ -125,11 +134,11 @@ export class UserUseCase {
     async updateUser(userId: number, userData: UpdateUserRequest): Promise<User | Error> {
         const userRepo = this.db.getRepository(User);
         const ticketRepo = this.db.getRepository(Ticket);
+        const transactionUseCase = new TransactionUseCase(AppDataSource);
         const transactionRepo = this.db.getRepository(Transaction)
-        let transaction = new Transaction()
 
         const user = await userRepo.findOne({
-            where: { id: userId },
+            where: {id: userId},
             relations: {
                 transactions: true,
                 tickets: true,
@@ -139,29 +148,24 @@ export class UserUseCase {
         if (!user) {
             return new Error("User " + userId + " not found")
         }
-        if (userData.login) {
+        if (userData.login && userData.login != user.login) {
             user.login = userData.login;
         }
-        if (userData.password) {
-            user.password = userData.password
+        if (userData.password && userData.password != user.password) {
+            user.password = await hash(userData.password, 10);
         }
-        if (userData.roles) {
+        if (userData.roles && userData.roles != user.roles) {
 
-            const currentRolesSet = new Set(user.roles.split(';').filter(role => role.trim()));
             const newRolesSet = new Set(userData.roles.split(';').filter(role => role.trim()));
 
-            newRolesSet.forEach(role => {
-                if (!currentRolesSet.has(role)) {
-                    currentRolesSet.add(role);
-                } else {
-                    currentRolesSet.delete(role);
-                }
-            });
-
-            user.roles = Array.from(currentRolesSet).join(';');
+            user.roles = Array.from(newRolesSet).join(';');
         }
         if (userData.sold) {
             const newSold = user.sold + userData.sold;
+            let transaction: any = {
+                createdAt: new Date(),
+                userId: user.id
+            };
 
             if (newSold < 0) {
                 throw new Error("User does not have enough sold");
@@ -169,18 +173,22 @@ export class UserUseCase {
 
             user.sold = newSold;
             transaction.amount = userData.sold;
-            if (userData.sold < 0){
+            if (userData.sold < 0) {
                 transaction.type = TransactionType.WITHDRAWAL
             }
-            if (userData.sold > 0){
+            if (userData.sold > 0) {
                 transaction.type = TransactionType.DEPOSIT
             }
+
+            const transactionData = transactionValidation.validate(transaction)
+
+            transactionUseCase.createTransaction(transactionData.value)
         }
         if (userData.soldTT != null) {
             user.sold = userData.soldTT
         }
         if (userData.ticketId) {
-            const ticket = await ticketRepo.findOneBy({ id: userData.ticketId })
+            const ticket = await ticketRepo.findOneBy({id: userData.ticketId})
 
             if (!ticket) {
                 throw new Error("Ticket " + userData.ticketId + " not found")
@@ -197,7 +205,7 @@ export class UserUseCase {
             user.tickets = Array.from(userTickets);
         }
         if (userData.transactionId) {
-            const transaction = await transactionRepo.findOneBy({ id: userData.transactionId })
+            const transaction = await transactionRepo.findOneBy({id: userData.transactionId})
 
             if (!transaction) {
                 throw new Error("transaction " + userData.transactionId + " not found")
@@ -213,21 +221,14 @@ export class UserUseCase {
 
             user.transactions = Array.from(userTransactions);
         }
-
-        transaction.createdAt = new Date()
-        transaction.user = user
-
-        const result =  await userRepo.save(user);
-        await transactionRepo.save(transaction);
-
-        return result;
+        return await userRepo.save(user);
     }
 
     async createUserTicket(userId: number, ticketType: TicketType): Promise<User | Error> {
 
         const userRepo = this.db.getRepository(User);
         const ticketUseCase = new TicketUseCase(AppDataSource);
-        const user = await userRepo.findOneBy({ id: userId });
+        const user = await userRepo.findOneBy({id: userId});
 
         if (!user) {
             throw new Error("User " + userId + " not found")
@@ -269,14 +270,14 @@ export class UserUseCase {
 
     async resolveTransactions(transactionIds: number[], transactionRepository: Repository<Transaction>): Promise<Transaction[]> {
         const transactions = await Promise.all(
-            transactionIds.map(id => transactionRepository.findOne({ where: { id } }))
+            transactionIds.map(id => transactionRepository.findOne({where: {id}}))
         );
         return transactions.filter((t): t is Transaction => t !== null);
     }
 
     async resolveTickets(ticketIds: number[], ticketRepository: Repository<Ticket>): Promise<Ticket[]> {
         const tickets = await Promise.all(
-            ticketIds.map(id => ticketRepository.findOne({ where: { id } }))
+            ticketIds.map(id => ticketRepository.findOne({where: {id}}))
         );
         return tickets.filter((t): t is Ticket => t !== null);
     }

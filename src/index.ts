@@ -1,15 +1,17 @@
 import express from "express";
-import { AppDataSource } from "./database/database";
-import { showRoutes } from "./handlers/routes/shows-route";
-import { movieRoutes } from "./handlers/routes/movies-route";
-import { roomRoutes } from "./handlers/routes/rooms-route";
-import { ticketRoutes } from "./handlers/routes/tickets-route";
-import { imageRoutes } from "./handlers/routes/images-route";
-import { userRoutes } from "./handlers/routes/users-route";
-import { transactionRoutes } from "./handlers/routes/transactions-route";
-require('dotenv').config();
+import {AppDataSource} from "./database/database";
+import {showRoutes} from "./handlers/routes/shows-route";
+import {movieRoutes} from "./handlers/routes/movies-route";
+import {roomRoutes} from "./handlers/routes/rooms-route";
+import {ticketRoutes} from "./handlers/routes/tickets-route";
+import {userRoutes} from "./handlers/routes/users-route";
+import {transactionRoutes} from "./handlers/routes/transactions-route";
 import path from "path";
+import {statsRoutes} from "./handlers/routes/stats-route";
+import swaggerUi from 'swagger-ui-express';
 
+require('dotenv').config();
+const swaggerDocument = require('./swaggerConfig.json');
 const logger: any = require('./config/logger');
 const cors = require('cors');
 
@@ -27,14 +29,14 @@ const main = async () => {
     }
 
     if (!process.env.JWT_SECRET) {
-        console.error('FATAL ERROR: JWT_SECRET is not defined.');
-        process.exit(1); // Arrête l'application avec une erreur si JWT_SECRET n'est pas défini
+        process.exit(1);
     }
 
     app.use(cors({
-        origin: 'http://localhost:3030'
+        origin: '*'
     }));
 
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
     app.use('/static', express.static(path.join(__dirname, 'src', 'images')));
     app.use(express.json());
 
@@ -51,9 +53,9 @@ const main = async () => {
     movieRoutes(app);
     ticketRoutes(app);
     roomRoutes(app);
-    imageRoutes(app);
     userRoutes(app);
     transactionRoutes(app);
+    statsRoutes(app);
 
     app.listen(port, () => {
         console.log(`Server running on port ${port}`);

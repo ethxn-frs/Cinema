@@ -9,14 +9,12 @@ export const movieValidation = Joi.object<MovieRequest>({
         .min(5)
         .required(),
     duration: Joi.number().min(1).required(),
-    imageId: Joi.string().min(1).optional(),
 }).options({abortEarly: false})
 
 export interface MovieRequest {
     name: string
     description: string
     duration: number
-    imageId?: string,
 }
 
 export const listMovieValidation = Joi.object<ListMovieRequest>({
